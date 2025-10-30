@@ -5,13 +5,11 @@ from controllers.xlsx_json_controller import xlsx_json_controller
 import uvicorn
 
 #constante de configuração
-
 HOST = "localhost"
 PORT = 5000
 DEBUG = True
 
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
