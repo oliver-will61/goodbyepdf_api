@@ -1,13 +1,12 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from controllers.xlsx_json_controller import xlsx_json_controller
-
+from dotenv import load_dotenv
+import os
 import uvicorn
 
-#constante de configuração
-HOST = "localhost"
-PORT = 5000
-DEBUG = True
+#carrega constante de configuração
+load_dotenv()
 
 app = FastAPI()
 
@@ -28,7 +27,7 @@ async def processaArquivo(arquivo: UploadFile = File(...)):
 if __name__ == "__main__":
     uvicorn.run(
         "__main__:app",
-        host=HOST,
-        port=PORT,
-        reload=DEBUG
+        host= os.getenv,
+        port= int(os.getenv),
+        reload= os.getenv
     )
