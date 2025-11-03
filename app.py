@@ -27,7 +27,7 @@ async def processaArquivo(arquivo: UploadFile = File(...)):
 if __name__ == "__main__":
     uvicorn.run(
         "__main__:app",
-        host= os.getenv,
-        port= os.getenv,
-        reload= os.getenv
+        host= os.getenv("HOST", "0.0.0.0"),
+        port= int(os.getenv("PORT", 5000)),
+        reload= os.getenv("RELOAD", "false").lower() == "true"
     )
