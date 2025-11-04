@@ -7,6 +7,8 @@ class Gerenciador_xlsx:
 
     def converte_json(self):
             
+            print('iniciando a conversão...')
+
             excel_data = BytesIO(self.arquivo)
 
             # Lê o arquivo Excel
