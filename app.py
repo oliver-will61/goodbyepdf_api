@@ -20,7 +20,7 @@ app.add_middleware(
 
 @app.post("/api/xlsx-json")
 async def processaArquivo(arquivo: UploadFile = File(...)):
-
+    print('arquivo recebido!')
     #chama controller
     return await xlsx_json_controller(arquivo)
 
