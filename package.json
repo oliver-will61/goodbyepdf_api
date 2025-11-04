@@ -1,0 +1,20 @@
+{
+  "name": "api-conversor-de-arquivos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliver-will61/api-conversor-de-arquivos.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/oliver-will61/api-conversor-de-arquivos/issues"
+  },
+  "homepage": "https://github.com/oliver-will61/api-conversor-de-arquivos#readme"
+}
