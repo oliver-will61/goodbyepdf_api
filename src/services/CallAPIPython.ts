@@ -3,7 +3,7 @@ import fs from 'fs';
 import axios from 'axios';
 import FormData from 'form-data';
 
-export class ConversaoService {
+export class CallAPIPython {
     private baseURL: string
 
     constructor() {

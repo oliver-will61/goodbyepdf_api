@@ -24,7 +24,7 @@ router.get('/', (req, res) => {
 })
 
 //registra rota
-app.use('/', router)
-app.use('/goodbyepdf', goodbypdRouter)
+//app.use('/', router)
+app.use('/', goodbypdRouter)
 
 export default app;

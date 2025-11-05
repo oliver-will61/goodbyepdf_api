@@ -1,6 +1,6 @@
 
 import { Request, Response } from 'express'; // ← Importe do Express
-import { ConversaoService } from '../../services/goodbyepdf/ConversaoService';
+import { CallAPIPython } from '../services/CallAPIPython';
 
 
 export const xlsxForJsonController = async (req: Request, res: Response) => {
@@ -16,7 +16,7 @@ export const xlsxForJsonController = async (req: Request, res: Response) => {
 
         console.log(req.file);
         
-        const conversaoService = new ConversaoService
+        const conversaoService = new CallAPIPython
 
         // envia o arquivo para a API de conversão
         conversaoService.enviaParaAPI(req, res)        
