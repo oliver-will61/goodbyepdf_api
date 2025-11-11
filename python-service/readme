@@ -1,0 +1,10 @@
+PARA INCIAR O AMBIENTE DE DEV:
+
+Use run.py
+
+
+PARA INCIAR O AMBIENTE DE PROD:
+
+Use: uvicorn main:app --host 0.0.0.0 --port 5000 --workers 4
+
+
