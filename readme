@@ -1,0 +1,9 @@
+PARA INICIAR O SERVIDOR TYPESCRIPT
+
+PROD: npm start
+DEV: npm run dev
+
+PARA INCIAR O SERVIDOR PYTHON
+
+PROD: uvicorn main:app --host 0.0.0.0 --port 5000 --workers 4
+DEV: python run.py
