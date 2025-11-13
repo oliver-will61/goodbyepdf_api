@@ -19,12 +19,7 @@ app.use(express.static('frontend'))
 
 const router = express.Router();
 
-// router.get('/', (req, res) => {
-//     res.sendFile(path.join(__dirname, '../public/html/index.html'))
-// })
-
 //registra rota
-//app.use('/', router)
 app.use('/', goodbypdRouter)
 
 export default app;
