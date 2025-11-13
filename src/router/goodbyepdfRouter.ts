@@ -29,7 +29,7 @@ router.post('/xlsx-json', upload.single('arquivo'), async (req, res, next) => {
 
 
 router.get('/xlsx-json', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../public/html/xlsx/xlsxForJson.html'))
+    res.sendFile(path.join(__dirname, '../../frontend/public/html/xlsx/xlsxForJson.html'))
 })
 
 
@@ -37,7 +37,7 @@ router.get('/xlsx-json', (req, res) => {
 
 //index
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../public/html/index.html'))
+    res.sendFile(path.join(__dirname, '../../frontend/public/html/index.html'))
 })
 
 export default router
