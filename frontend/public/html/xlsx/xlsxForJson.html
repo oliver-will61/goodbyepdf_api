@@ -12,15 +12,12 @@
     <button id="btn">Enviar</button>
     <script type="module">
 
-        //import  {enderecoAPI} from './src/config.js';
-
         const arquivoInput = document.querySelector('#arquivo')
         const btn = document.querySelector('#btn')        
 
         btn.addEventListener('click', async (e) => {
            
             e.preventDefault()
-            //e.stopPropagation();
 
             try {
 
@@ -29,24 +26,22 @@
                 const formData = new FormData();
                 formData.append('arquivo', arquivo);
 
+                console.log('Enviando arquivo para o servidor...')
+
+                //* response recebe o tipo 'blob' do servidor
                 const response = await fetch(`/xlsx-json`, {
                     method: "POST",
                     body: formData
                 });
 
-                //const result = await response.json();
-
                 console.log('Resposta do servidor:', response);
-                console.log('Status da resposta:', response.status);
-                console.log('Headers da resposta:', response.headers);
-
-                // obtem os dados
-                const jsonText = await response.text();
-
-                // Cria o Blob a partir do texto, especificando o tipo correto
-                const blob = new Blob([jsonText], {
-                    type: 'application/json; charset=utf-8' 
-                })
+                
+                /*
+                 * Converte a resposta da API em um objeto Blob 
+                 * O Blob contém os dados do arquivo JSON convertido pelo servidor
+                 * e preserva metadados como tipo MIME e tamanho do arquivo
+                 */
+                const blob  = await response.blob();
 
                 //cria URL para download
                 const url = window.URL.createObjectURL(blob)

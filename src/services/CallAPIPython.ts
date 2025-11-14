@@ -30,7 +30,7 @@ export class CallAPIPython {
                         ...formData.getHeaders()
                     },
                     timeout: 30000,
-                    responseType: 'arraybuffer' //definimos o tipo do response
+                    responseType: 'blob' //guardas as informações do arquivo convertido em blob para facilidar o envio ao frontend
                 }
             );
 
@@ -39,9 +39,6 @@ export class CallAPIPython {
 
             console.log("Resposta do Python: ", resposta.data)
 
-            // Define os headers para forçar download no cliente final
-            res.setHeader('Content-Type', 'application/json');
-            res.setHeader('Content-Disposition', resposta.headers['content-disposition'] || `attachment; filename="${req.file!.originalname}.json"`)
             return res.send(resposta.data)
 
         } catch (error: any) {
@@ -57,7 +54,7 @@ export class CallAPIPython {
             }        
 
             return res.status(500).json({
-                mensagem: "Erro ao processar arquivo Python",
+                mensagem: "Erro ao processar arquivo no Python",
                 erro: error.response?.data || error.message 
             });   
         }
