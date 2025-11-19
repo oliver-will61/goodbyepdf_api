@@ -1,6 +1,5 @@
 from fastapi import HTTPException, Response
 from models.Gerenciador_xlsx import Gerenciador_xlsx
-import json
 
 async def xlsx_json_controller(arquivo):
         try:

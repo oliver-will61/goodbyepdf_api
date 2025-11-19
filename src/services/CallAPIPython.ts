@@ -5,9 +5,11 @@ import FormData from 'form-data';
 
 export class CallAPIPython {
     private baseURL: string
+    public endpoint: string
 
-    constructor() {
+    constructor(endepoint: string) {
         this.baseURL = String(process.env.CONVERSOR_API_URL);
+        this.endpoint = endepoint
     }
 
     async enviaParaAPI(req: Request, res: Response) {
@@ -23,14 +25,14 @@ export class CallAPIPython {
             );
 
             const resposta = await axios.post(
-                `${this.baseURL}/api/xlsx-json`,
+                `${this.baseURL}${this.endpoint}`,
                 formData, 
                 {
                     headers: {
                         ...formData.getHeaders()
                     },
                     timeout: 30000,
-                    responseType: 'blob' //guardas as informações do arquivo convertido em blob para facilidar o envio ao frontend
+                    responseType: 'arraybuffer' //guardas as informações do arquivo convertido em blob para facilidar o envio ao frontend
                 }
             );
 

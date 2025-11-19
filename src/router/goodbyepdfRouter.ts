@@ -3,6 +3,7 @@ import express from 'express'
 import multer from 'multer'
 
 import {xlsxForJsonController} from '../controllers/xlsxForJsonController'
+import {jsonForXlsxController} from '../controllers/jsonForXlsxController'
 
 const router = express.Router();
 
@@ -23,6 +24,10 @@ const upload = multer({
 
 router.post('/xlsx-json', upload.single('arquivo'), async (req, res, next) => {
     xlsxForJsonController(req, res).catch(next)   
+})
+
+router.post('/json-xlsx', upload.single('arquivo'), async (req, res, next ) => {
+    jsonForXlsxController(req, res).catch(next)
 })
 
 
