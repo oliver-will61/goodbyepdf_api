@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>json-xlsx</title>
+
+</head>
+<body>
+
+    <input type="file" id="arquivo">
+    <button id="btn">Enviar</button>
+    <script type="module">
+
+        import Arquivo from '../../shared/js/models/Arquivo.js'  
+        import geraDownload from '../../shared/js/utils/geraDownload.js'   
+
+        const arquivoInput = document.querySelector('#arquivo')
+        const btn = document.querySelector('#btn')     
+        const ENDPOINT_JSON_XLSX = '/json-xlsx'   
+
+        btn.addEventListener('click', async (e) => {
+           
+            e.preventDefault()
+
+            try {
+                
+                const arquivo = new Arquivo(arquivoInput.files[0])
+
+                arquivo.verificaExtensao(arquivo.extensoesPermitidas['JSON'])
+
+                const arquivoConvertido = await arquivo.realizaConversao(ENDPOINT_JSON_XLSX)
+                
+                geraDownload(arquivoConvertido, 'arquivo_convertido.xlsx')
+
+            } catch (error) {
+
+                if(error.message.includes('Failed to fetch')) {
+                    alert('Servidor Indisponível')
+                    throw new Error ('Servidor Indisponível')
+                }
+                alert(error.message)
+            }      
+        
+        })
+
+    </script>    
+</body>
+</html>

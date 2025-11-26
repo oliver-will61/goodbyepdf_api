@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import goodbypdRouter from './router/goodbyepdfRouter'
-import goodbypdfPagesRouter from './router/goodbyepdfPagesRouter' 
+// import goodbypdfPagesRouter from './router/goodbyepdfPagesRouter' 
 
 const app = express()
 
@@ -13,12 +13,11 @@ app.use(cors({
     credentials: true
 }))
 
-app.use(express.static('frontend'))
-
-const router = express.Router();
+//Serve as paginas estaticas
+app.use(express.static('frontend/public'))
 
 //registra rota
 app.use('/', goodbypdRouter)
-app.use('/pg', goodbypdfPagesRouter)
+// app.use('/pg', goodbypdfPagesRouter)
 
 export default app;
