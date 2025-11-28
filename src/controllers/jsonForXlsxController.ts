@@ -1,6 +1,7 @@
 
 import { Request, Response } from 'express'; // ← Importe do Express
 import { CallAPIPython } from '../services/CallAPIPython';
+import { Arquivo } from '../models/Arquivo';
 
 
 export const jsonForXlsxController = async (req: Request, res: Response) => {
@@ -12,7 +13,11 @@ export const jsonForXlsxController = async (req: Request, res: Response) => {
             })
         }
 
-        console.log("Enviando para a API do Python...");
+        const arquivo = new Arquivo(req.file)
+
+        const validaArquivo = arquivo.validaArquivo(arquivo.extensaoPermitida['JSON'])
+
+        console.log("Enviando arquivo para a API do Python...");
 
         console.log(req.file);
         

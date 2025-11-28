@@ -9,11 +9,11 @@ export default class Arquivo {
 
     constructor (upload) {
         this.upload = upload
-        this. extensoesPermitidas = {
+        this.extensoesPermitidas = {
 
             /* Variavel responsável por armazenar em constantes os valores das extensões permitidas*/
 
-            JSON: 'json',
+            JSON:    'json',
             XLSX: 'xlsx'
         }
     }
