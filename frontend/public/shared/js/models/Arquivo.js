@@ -54,7 +54,7 @@ export default class Arquivo {
 
         const formData = new FormData();
         formData.append('arquivo', this.upload);
-
+        
         const response = await fetch(endpoint, {
             method: "POST",
             body: formData

@@ -12,52 +12,33 @@
     <button id="btn">Enviar</button>
     <script type="module">
 
+        import Arquivo from '../../shared/js/models/Arquivo.js'  
+        import geraDownload from '../../shared/js/utils/geraDownload.js'   
+
         const arquivoInput = document.querySelector('#arquivo')
-        const btn = document.querySelector('#btn')        
+        const btn = document.querySelector('#btn')   
+        const ENDPOINT_XLSX_JSON = '/xlsx-json'        
 
         btn.addEventListener('click', async (e) => {
            
             e.preventDefault()
 
             try {
+                const arquivo = new Arquivo(arquivoInput.files[0])
 
-                const arquivo = arquivoInput.files[0]
-                
-                const formData = new FormData();
-                formData.append('arquivo', arquivo);
+                arquivo.verificaExtensao(arquivo.extensoesPermitidas['XLSX'])
 
-                console.log('Enviando arquivo para o servidor...')
+                const arquivoConvertido = await arquivo.realizaConversao(ENDPOINT_XLSX_JSON)
 
-                //* response recebe o tipo 'blob' do servidor
-                const response = await fetch(`/xlsx-json`, {
-                    method: "POST",
-                    body: formData
-                });
-
-                console.log('Resposta do servidor:', response);
-                
-                /*
-                 * Converte a resposta da API em um objeto Blob 
-                 * O Blob contém os dados do arquivo JSON convertido pelo servidor
-                 * e preserva metadados como tipo MIME e tamanho do arquivo
-                 */
-                const blob  = await response.blob();
-
-                //cria URL para download
-                const url = window.URL.createObjectURL(blob)
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'arquivo_convertido.json';
-                document.body.appendChild(link)
-                link.click();
-                document.body.removeChild(link)
-                window.URL.revokeObjectURL(url)
-
+                geraDownload(arquivoConvertido, 'arquivo_convertido.json')
 
             } catch (error) {
-                console.error(`Error no servidor:`, error)
-            }      
-        
+                if(error.message.includes('Failed to fetch')) {
+                    alert('Servidor Indisponível')
+                    throw new Error ('Servidor Indisponível')
+                }
+                alert(error.message)
+            }
         })
 
     </script>    
