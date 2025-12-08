@@ -16,9 +16,6 @@ export const xlsxForJsonController = async (req: Request, res: Response) => {
 
         const validaArquivo = await arquivo.validaArquivo(arquivo.tipoArquivos['excel'])
         
-
-        console.log("Enviando para a API do Python...");
-        
         const conversaoService = new CallAPIPython('/api/xlsx-json')
 
         // envia o arquivo para a API de conversão
