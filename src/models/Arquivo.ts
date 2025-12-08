@@ -61,8 +61,6 @@ export class Arquivo {
 
         if(arquivoEsperado === this.tipoArquivos.excel) {
              
-            console.log(this.arquivo.buffer);
-
             //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
             
             for (let i =0; i < assinatura.length; i++) {
