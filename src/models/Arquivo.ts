@@ -2,32 +2,30 @@ import { error, log } from 'console';
 import { Express } from 'express';
 import XLSX from 'xlsx'
 
-interface arquivoEsperadoDicionario {
+interface tiposInterface {
     extensao: string,
     assinatura?: number[]
 }
 
 export class Arquivo {
 
-    public arquivo: Express.Multer.File 
-    public tipoArquivos
-
-    constructor (arquivo: Express.Multer.File) {
-        this.arquivo = arquivo
-        this.tipoArquivos = {
-            json: {
-                extensao: 'json'
-            },
-            excel: {
-                extensao:'xlsx',
-                assinatura: [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00],
-            }
+    static TIPOS = {
+        json: {
+            extensao: 'json'
+        },
+        excel: {
+            extensao:'xlsx',
+            assinatura: [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00],
         }
     }
 
+    public arquivo: Express.Multer.File     
 
+    constructor (arquivo: Express.Multer.File) {
+        this.arquivo = arquivo
+    }
 
-    async validaArquivo(tipoArquivo: arquivoEsperadoDicionario) {
+    async validaArquivo(tipoArquivo: tiposInterface) {
 
         console.log('Validando o arquivo...')
 
@@ -47,7 +45,7 @@ export class Arquivo {
         
 
         //verifica o conteudo
-        if(tipoArquivo === this.tipoArquivos.json) {
+        if(tipoArquivo === Arquivo.TIPOS.json) {
 
             try {
                 const conteudo = this.arquivo.buffer.toString('utf8');
@@ -60,12 +58,12 @@ export class Arquivo {
 
         }
 
-        if(tipoArquivo === this.tipoArquivos.excel) {
+        if(tipoArquivo === Arquivo.TIPOS.excel) {
              
             //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
             
             for (let i =0; i < assinatura.length; i++) {
-                if(assinatura[i] != this.tipoArquivos.excel.assinatura[i]){
+                if(assinatura[i] != Arquivo.TIPOS.excel.assinatura[i]){
                     throw new Error ('Arquivo não compativel ou está corrompido')
                 }
             }            

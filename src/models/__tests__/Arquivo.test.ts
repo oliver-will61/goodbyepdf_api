@@ -33,7 +33,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('dados.json', criarBufferJsonValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['json']);
+            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['json']);
             
             expect(resultado).toBe(true);
         });
@@ -42,7 +42,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('planilha.xlsx', criarBufferValido(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['excel']);
+            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['excel']);
             
             expect(resultado).toBe(true);
         });
@@ -51,7 +51,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('documento.pdf', Buffer.from(''), 'application/pdf');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['json']))
+            await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
                 .rejects
                 .toThrow('Extensão não permitida. Use um arquivo com a extensão: .json');
         });
@@ -60,7 +60,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('arquivosemextensao', Buffer.from(''),'text/plain');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['json']))
+            await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
                 .rejects
                 .toThrow('Extensão não permitida. Use um arquivo com a extensão: .json');
         });
@@ -69,7 +69,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('dados.JSON', criarBufferJsonValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['json']);
+            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['json']);
             
             expect(resultado).toBe(true);
         });
@@ -78,7 +78,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('dados.json', criarBufferValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['excel']))
+            await expect(arquivo.validaArquivo(Arquivo.TIPOS['excel']))
                 .rejects
                 .toThrow('Extensão não permitida. Use um arquivo com a extensão: .xlsx');
         });
@@ -92,7 +92,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('dados.json', criarBufferJsonValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['json']);
+            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['json']);
             expect(resultado).toBe(true);
         });
 
@@ -101,7 +101,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('planilha.xlsx', criarBufferValido(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['excel']);
+            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['excel']);
             expect(resultado).toBe(true);
         });
 
@@ -112,7 +112,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('dados.json', jsonInvalido, 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['json']))
+            await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
                 .rejects
                 .toThrow('Arquivo JSON inválido');
         });
@@ -122,7 +122,7 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('planilha.xlsx', bufferInvalido);
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['excel']))
+            await expect(arquivo.validaArquivo(Arquivo.TIPOS['excel']))
                 .rejects
                 .toThrow('Arquivo não compativel ou está corrompido');
         });
