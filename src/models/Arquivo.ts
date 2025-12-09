@@ -27,11 +27,12 @@ export class Arquivo {
 
 
 
-    async validaArquivo(arquivoEsperado: arquivoEsperadoDicionario) {
+    async validaArquivo(tipoArquivo: arquivoEsperadoDicionario) {
 
         console.log('Validando o arquivo...')
 
-        const extensaoArquivoEsperado = arquivoEsperado.extensao
+        //
+        const extensaoArquivoEsperado = tipoArquivo.extensao
 
         // verifica extensão
         const extensaoArquivo = this.arquivo.originalname.split('.').pop()?.toLowerCase();
@@ -46,7 +47,7 @@ export class Arquivo {
         
 
         //verifica o conteudo
-        if(arquivoEsperado === this.tipoArquivos.json) {
+        if(tipoArquivo === this.tipoArquivos.json) {
 
             try {
                 const conteudo = this.arquivo.buffer.toString('utf8');
@@ -59,7 +60,7 @@ export class Arquivo {
 
         }
 
-        if(arquivoEsperado === this.tipoArquivos.excel) {
+        if(tipoArquivo === this.tipoArquivos.excel) {
              
             //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
             

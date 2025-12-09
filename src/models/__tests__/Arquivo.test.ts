@@ -1,8 +1,9 @@
+import { buffer } from 'stream/consumers';
 import { Arquivo } from '../Arquivo';
 import { Express } from 'express';
 
 // Mock para o arquivo do Multer
-const criarMockArquivo = (originalname: string, mimetype?: string): Express.Multer.File => ({
+const criarMockArquivo = (originalname: string, bufferContent?: Buffer, mimetype?: string): Express.Multer.File => ({
     fieldname: 'arquivo',
     originalname: originalname,
     encoding: '7bit',
@@ -11,64 +12,130 @@ const criarMockArquivo = (originalname: string, mimetype?: string): Express.Mult
     destination: '',
     filename: originalname,
     path: '',
-    buffer: Buffer.from(''),
+    buffer: bufferContent || Buffer.from(''),
     stream: null as any
 });
 
+const criarBufferValido = (): Buffer => {
+    const assinaturaExecel = Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00]);
+    const conteudoRestante = Buffer.from('Conteudo do execel');
+    return Buffer.concat([assinaturaExecel, conteudoRestante])
+}
+
+const criarBufferJsonValido = (): Buffer => {
+    const jsonValido = JSON.stringify({nome: "Teste", valor: 123});
+    return Buffer.from(jsonValido, 'utf8')
+}
+
 describe('Arquivo', () => {
-    describe('validaArquivo', () => {
+    describe('validaArquivo - extensão', () => {
         it('deve retornar true para arquivo JSON com extensão correta', async () => {
-            const mockFile = criarMockArquivo('dados.json', 'application/json');
+            const mockFile = criarMockArquivo('dados.json', criarBufferJsonValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo('json');
+            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['json']);
             
             expect(resultado).toBe(true);
         });
 
         it('deve retornar true para arquivo XLSX com extensão correta', async () => {
-            const mockFile = criarMockArquivo('planilha.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            const mockFile = criarMockArquivo('planilha.xlsx', criarBufferValido(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo('xlsx');
+            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['excel']);
             
             expect(resultado).toBe(true);
         });
 
         it('deve lançar erro para arquivo com extensão incorreta', async () => {
-            const mockFile = criarMockArquivo('documento.pdf', 'application/pdf');
+            const mockFile = criarMockArquivo('documento.pdf', Buffer.from(''), 'application/pdf');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo('json'))
+            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['json']))
                 .rejects
                 .toThrow('Extensão não permitida. Use um arquivo com a extensão: .json');
         });
 
         it('deve lançar erro para arquivo sem extensão', async () => {
-            const mockFile = criarMockArquivo('arquivosemextensao', 'text/plain');
+            const mockFile = criarMockArquivo('arquivosemextensao', Buffer.from(''),'text/plain');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo('json'))
+            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['json']))
                 .rejects
                 .toThrow('Extensão não permitida. Use um arquivo com a extensão: .json');
         });
 
         it('deve funcionar com extensão em maiúsculo no arquivo', async () => {
-            const mockFile = criarMockArquivo('dados.JSON', 'application/json');
+            const mockFile = criarMockArquivo('dados.JSON', criarBufferJsonValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            const resultado = await arquivo.validaArquivo('json');
+            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['json']);
             
             expect(resultado).toBe(true);
         });
 
         it('deve lançar erro quando a extensão do arquivo não corresponde à permitida', async () => {
-            const mockFile = criarMockArquivo('dados.json', 'application/json');
+            const mockFile = criarMockArquivo('dados.json', criarBufferValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo('xlsx'))
+            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['excel']))
                 .rejects
                 .toThrow('Extensão não permitida. Use um arquivo com a extensão: .xlsx');
         });
     });
+
+    describe('validaArquivo - Conteúdo', () => {
+
+        //testes positivos
+        it('deve aceitar JSON válido', async () => {
+        
+            const mockFile = criarMockArquivo('dados.json', criarBufferJsonValido(), 'application/json');
+            const arquivo = new Arquivo(mockFile);
+            
+            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['json']);
+            expect(resultado).toBe(true);
+        });
+
+
+        it('deve aceitar Excel com assinatura válida', async () => {
+            const mockFile = criarMockArquivo('planilha.xlsx', criarBufferValido(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            const arquivo = new Arquivo(mockFile);
+            
+            const resultado = await arquivo.validaArquivo(arquivo.tipoArquivos['excel']);
+            expect(resultado).toBe(true);
+        });
+
+        // testes negativos
+
+         it('deve lançar erro para JSON inválido', async () => {
+            const jsonInvalido = Buffer.from('{ nome: "Teste"', 'utf8');
+            const mockFile = criarMockArquivo('dados.json', jsonInvalido, 'application/json');
+            const arquivo = new Arquivo(mockFile);
+            
+            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['json']))
+                .rejects
+                .toThrow('Arquivo JSON inválido');
+        });
+
+        it('deve lançar erro para Excel com assinatura inválida', async () => {
+            const bufferInvalido = Buffer.from('não é excel');
+            const mockFile = criarMockArquivo('planilha.xlsx', bufferInvalido);
+            const arquivo = new Arquivo(mockFile);
+            
+            await expect(arquivo.validaArquivo(arquivo.tipoArquivos['excel']))
+                .rejects
+                .toThrow('Arquivo não compativel ou está corrompido');
+        });
+
+        it('deve lançar erro para tipo desconhecido', async () => {
+            const mockFile = criarMockArquivo('arquivo.txt', Buffer.from('texto'));
+            const arquivo = new Arquivo(mockFile);
+            
+            const tipoDesconhecido = { extensao: 'txt' };
+            await expect(arquivo.validaArquivo(tipoDesconhecido))
+                .rejects
+                .toThrow('Arquivo corrompido ou inválido');
+        });
+
+    })
 });
