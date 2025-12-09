@@ -15,7 +15,7 @@ export const jsonForXlsxController = async (req: Request, res: Response) => {
 
         const arquivo = new Arquivo(req.file)
 
-        const validaArquivo = await arquivo.validaArquivo(arquivo.tipoArquivos['json'])        
+        const validaArquivo = await arquivo.validaArquivo(Arquivo.TIPOS['json'])        
 
         console.log("Enviando arquivo para a API do Python...");
 
