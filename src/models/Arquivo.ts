@@ -71,6 +71,6 @@ export class Arquivo {
             return true
         }
 
-        throw new FileValidationError('INVALID_OR_CORRUPTED')
+        throw new FileValidationError('UNSUPPORTED_TYPE')
     }
  }

@@ -1,5 +1,6 @@
 import { Arquivo } from '../Arquivo';
 import {FileValidationError} from '../AppError'
+import { error } from 'console';
 
 // Mock para o arquivo do Multer
 const criarMockArquivo = (originalname: string, bufferContent?: Buffer, mimetype?: string): Express.Multer.File => ({
@@ -46,24 +47,6 @@ describe('Arquivo', () => {
             expect(resultado).toBe(true);
         });
 
-        it('deve lançar erro para arquivo com extensão incorreta', async () => {
-            const mockFile = criarMockArquivo('documento.pdf', Buffer.from(''), 'application/pdf');
-            const arquivo = new Arquivo(mockFile);
-            
-            await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
-                .rejects
-                .toThrow(FileValidationError);
-        });
-
-        it('deve lançar erro para arquivo sem extensão', async () => {
-            const mockFile = criarMockArquivo('arquivosemextensao', Buffer.from(''),'text/plain');
-            const arquivo = new Arquivo(mockFile);
-            
-            await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
-                .rejects
-                .toThrow(FileValidationError);
-        });
-
         it('deve funcionar com extensão em maiúsculo no arquivo', async () => {
             const mockFile = criarMockArquivo('dados.JSON', criarBufferJsonValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
@@ -73,13 +56,49 @@ describe('Arquivo', () => {
             expect(resultado).toBe(true);
         });
 
+        it('deve lançar erro para arquivo com extensão incorreta', async () => {
+            const mockFile = criarMockArquivo('documento.pdf', Buffer.from(''), 'application/pdf');
+            const arquivo = new Arquivo(mockFile);
+            
+            try {
+                await arquivo.validaArquivo(Arquivo.TIPOS['json'])
+                fail('Deveria ter lançado erro');
+            } catch (error:any) {
+                //verifica tudo de um vez
+                expect(error).toBeInstanceOf(FileValidationError);
+                expect(error.code).toBe('INVALID_EXTENSION')
+                expect(error.message).toContain('.json')
+            } 
+        });
+
+        it('deve lançar erro para arquivo sem extensão', async () => {
+            const mockFile = criarMockArquivo('arquivosemextensao', Buffer.from(''),'text/plain');
+            const arquivo = new Arquivo(mockFile);
+
+            try {
+                await arquivo.validaArquivo(Arquivo.TIPOS['json'])
+                fail('Deveria ter lançado erro');
+            } catch (error:any) {
+                //verifica tudo de um vez
+                expect(error).toBeInstanceOf(FileValidationError);
+                expect(error.code).toBe('INVALID_EXTENSION')
+                expect(error.message).toContain('.json')
+            }   
+        });
+
         it('deve lançar erro quando a extensão do arquivo não corresponde à permitida', async () => {
             const mockFile = criarMockArquivo('dados.json', criarBufferValido(), 'application/json');
             const arquivo = new Arquivo(mockFile);
-            
-            await expect(arquivo.validaArquivo(Arquivo.TIPOS['excel']))
-                .rejects
-                .toThrow(FileValidationError);
+
+            try {
+                await arquivo.validaArquivo(Arquivo.TIPOS['excel'])
+                fail('Deveria ter lançado erro');
+            } catch (error:any) {
+                //verifica tudo de um vez
+                expect(error).toBeInstanceOf(FileValidationError);
+                expect(error.code).toBe('INVALID_EXTENSION')
+                expect(error.message).toContain('.xlsx')
+            } 
         });
     });
 
@@ -111,19 +130,27 @@ describe('Arquivo', () => {
             const mockFile = criarMockArquivo('dados.json', jsonInvalido, 'application/json');
             const arquivo = new Arquivo(mockFile);
             
-            await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
-                .rejects
-                .toThrow(FileValidationError);
+            try {
+                await arquivo.validaArquivo(Arquivo.TIPOS['json'])
+                fail('Deveria ter lançado erro');
+            } catch (error: any){
+                expect(error).toBeInstanceOf(FileValidationError);
+                expect(error.code).toBe('INVALID_JSON')
+            }
         });
 
         it('deve lançar erro para Excel com assinatura inválida', async () => {
             const bufferInvalido = Buffer.from('não é excel');
             const mockFile = criarMockArquivo('planilha.xlsx', bufferInvalido);
             const arquivo = new Arquivo(mockFile);
-            
-            await expect(arquivo.validaArquivo(Arquivo.TIPOS['excel']))
-                .rejects
-                .toThrow(FileValidationError);
+
+            try {
+                await arquivo.validaArquivo(Arquivo.TIPOS['excel'])
+                fail('Deveria ter lançado erro');
+            } catch (error: any){
+                expect(error).toBeInstanceOf(FileValidationError);
+                expect(error.code).toBe('INVALID_EXCEL')
+            }
         });
 
         it('deve lançar erro para tipo desconhecido', async () => {
@@ -131,9 +158,15 @@ describe('Arquivo', () => {
             const arquivo = new Arquivo(mockFile);
             
             const tipoDesconhecido = { extensao: 'txt' };
-            await expect(arquivo.validaArquivo(tipoDesconhecido))
-                .rejects
-                .toThrow(FileValidationError);
+
+            try{
+                await arquivo.validaArquivo(tipoDesconhecido);
+                fail('Deveria ter lançado erro');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(FileValidationError);
+                expect(error.code).toBe('UNSUPPORTED_TYPE')
+            }
+
         });
 
     })
