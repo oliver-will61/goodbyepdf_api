@@ -1,6 +1,5 @@
-import { error, log } from 'console';
-import { Express } from 'express';
-import XLSX from 'xlsx'
+import {ErrorMessagens, ErrorCodes} from '../constants/errorMessages'
+import { FileValidationError } from './AppError'
 
 interface tiposInterface {
     extensao: string,
@@ -36,7 +35,7 @@ export class Arquivo {
         const extensaoArquivo = this.arquivo.originalname.split('.').pop()?.toLowerCase();
 
         if(extensaoArquivo != extensaoArquivoEsperado) {
-            throw new Error (`Extensão não permitida. Use um arquivo com a extensão: .${extensaoArquivoEsperado}`)
+            throw new FileValidationError ("INVALID_EXTENSION", extensaoArquivoEsperado)
         }
 
         //captura a asinnatura do arquivo
@@ -53,7 +52,7 @@ export class Arquivo {
                 console.log("Arquivo validado com sucesso");
                 return true
             } catch  {
-                throw new Error ('Arquivo JSON inválido')
+                throw new FileValidationError ("INVALID_JSON")
             }
 
         }
@@ -64,7 +63,7 @@ export class Arquivo {
             
             for (let i =0; i < assinatura.length; i++) {
                 if(assinatura[i] != Arquivo.TIPOS.excel.assinatura[i]){
-                    throw new Error ('Arquivo não compativel ou está corrompido')
+                    throw new FileValidationError('INVALID_EXCEL')
                 }
             }            
 
@@ -72,6 +71,6 @@ export class Arquivo {
             return true
         }
 
-        throw new Error ('Arquivo corrompido ou inválido')
+        throw new FileValidationError('INVALID_OR_CORRUPTED')
     }
  }

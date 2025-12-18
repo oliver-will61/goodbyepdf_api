@@ -1,6 +1,5 @@
-import { buffer } from 'stream/consumers';
 import { Arquivo } from '../Arquivo';
-import { Express } from 'express';
+import {FileValidationError} from '../AppError'
 
 // Mock para o arquivo do Multer
 const criarMockArquivo = (originalname: string, bufferContent?: Buffer, mimetype?: string): Express.Multer.File => ({
@@ -53,7 +52,7 @@ describe('Arquivo', () => {
             
             await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
                 .rejects
-                .toThrow('Extensão não permitida. Use um arquivo com a extensão: .json');
+                .toThrow(FileValidationError);
         });
 
         it('deve lançar erro para arquivo sem extensão', async () => {
@@ -62,7 +61,7 @@ describe('Arquivo', () => {
             
             await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
                 .rejects
-                .toThrow('Extensão não permitida. Use um arquivo com a extensão: .json');
+                .toThrow(FileValidationError);
         });
 
         it('deve funcionar com extensão em maiúsculo no arquivo', async () => {
@@ -80,7 +79,7 @@ describe('Arquivo', () => {
             
             await expect(arquivo.validaArquivo(Arquivo.TIPOS['excel']))
                 .rejects
-                .toThrow('Extensão não permitida. Use um arquivo com a extensão: .xlsx');
+                .toThrow(FileValidationError);
         });
     });
 
@@ -114,7 +113,7 @@ describe('Arquivo', () => {
             
             await expect(arquivo.validaArquivo(Arquivo.TIPOS['json']))
                 .rejects
-                .toThrow('Arquivo JSON inválido');
+                .toThrow(FileValidationError);
         });
 
         it('deve lançar erro para Excel com assinatura inválida', async () => {
@@ -124,7 +123,7 @@ describe('Arquivo', () => {
             
             await expect(arquivo.validaArquivo(Arquivo.TIPOS['excel']))
                 .rejects
-                .toThrow('Arquivo não compativel ou está corrompido');
+                .toThrow(FileValidationError);
         });
 
         it('deve lançar erro para tipo desconhecido', async () => {
@@ -134,7 +133,7 @@ describe('Arquivo', () => {
             const tipoDesconhecido = { extensao: 'txt' };
             await expect(arquivo.validaArquivo(tipoDesconhecido))
                 .rejects
-                .toThrow('Arquivo corrompido ou inválido');
+                .toThrow(FileValidationError);
         });
 
     })
