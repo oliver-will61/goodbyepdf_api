@@ -2,8 +2,7 @@ import express from 'express'
 //import cors from 'cors'
 import multer from 'multer'
 
-import {xlsxForJsonController} from '../controllers/xlsxForJsonController'
-import {jsonForXlsxController} from '../controllers/jsonForXlsxController'
+import {xlsxForJsonController, jsonForXlsxController} from '../controllers/arquivosController'
 
 const router = express.Router();
 
@@ -27,7 +26,7 @@ const upload = multer({
 
 
 router.post('/xlsx-json', upload.single('arquivo'), async (req, res, next) => {
-    xlsxForJsonController(req, res).catch(next)   
+    xlsxForJsonController.handleUpload(req, res).catch(next)   
     
 })
 
