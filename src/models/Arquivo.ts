@@ -1,7 +1,7 @@
 import {ErrorMessagens, ErrorCodes} from '../constants/errorMessages'
 import { FileValidationError } from './AppError'
 
-interface tiposInterface {
+export interface tiposInterface {
     extensao: string,
     assinatura?: number[]
 }
@@ -50,7 +50,7 @@ export class Arquivo {
                 const conteudo = this.arquivo.buffer.toString('utf8');
                 JSON.parse(conteudo)
                 console.log("Arquivo validado com sucesso");
-                return true
+                return
             } catch  {
                 throw new FileValidationError ("INVALID_JSON")
             }
@@ -68,7 +68,7 @@ export class Arquivo {
             }            
 
             console.log("Arquivo validado com sucesso");
-            return true
+            return
         }
 
         throw new FileValidationError('UNSUPPORTED_TYPE')
