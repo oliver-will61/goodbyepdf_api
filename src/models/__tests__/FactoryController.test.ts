@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { FactoryController } from '../FactoryController';
+import { FactoryController } from '../Controller';
 import { tiposInterface } from '../Arquivo';
 import { FileValidationError, ValidationError } from '../AppError';
 import { Arquivo } from '../Arquivo';
