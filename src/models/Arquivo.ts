@@ -3,10 +3,15 @@ import { FileValidationError } from './AppError'
 
 export interface tiposInterface {
     extensao: string,
-    assinatura?: number[]
+    assinaturaPermitida?: number[]
 }
 
 export class Arquivo {
+
+    public arquivo: Express.Multer.File   
+    public arquivoEsperado: tiposInterface 
+    private assinatura: Buffer = this.capturaAssinatura()
+    
 
     static TIPOS = {
         json: {
@@ -14,22 +19,27 @@ export class Arquivo {
         },
         excel: {
             extensao:'xlsx',
-            assinatura: [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00],
+            assinaturaPermitida: Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00]),
         }
     }
-
-    public arquivo: Express.Multer.File     
-
-    constructor (arquivo: Express.Multer.File) {
+    
+    constructor (arquivo: Express.Multer.File, arquivoEsperado: tiposInterface) {
         this.arquivo = arquivo
+        this.arquivoEsperado = arquivoEsperado
     }
 
-    async validaArquivo(tipoArquivo: tiposInterface) {
+    capturaAssinatura(): Buffer {
+        console.log('Capturando a assinatura...')
+        //captura a asinnatura do arquivo
+        const assinatura =  this.arquivo.buffer.slice(0,6);
+        console.log("Assinatura: ", assinatura);
+        return assinatura
+    }
 
-        console.log('Validando o arquivo...')
+    validaExtensão() {
 
-        //
-        const extensaoArquivoEsperado = tipoArquivo.extensao
+        
+        const extensaoArquivoEsperado = this.arquivoEsperado.extensao
 
         // verifica extensão
         const extensaoArquivo = this.arquivo.originalname.split('.').pop()?.toLowerCase();
@@ -37,40 +47,41 @@ export class Arquivo {
         if(extensaoArquivo != extensaoArquivoEsperado) {
             throw new FileValidationError ("INVALID_EXTENSION", extensaoArquivoEsperado)
         }
+    }
+    
+    validaJson(){
+    
+        try {
 
-        //captura a asinnatura do arquivo
-        const assinatura = this.arquivo.buffer.slice(0,6);
-        console.log("Assinatura: ", assinatura);
-        
-
-        //verifica o conteudo
-        if(tipoArquivo === Arquivo.TIPOS.json) {
-
-            try {
-                const conteudo = this.arquivo.buffer.toString('utf8');
-                JSON.parse(conteudo)
-                console.log("Arquivo validado com sucesso");
-                return
-            } catch  {
-                throw new FileValidationError ("INVALID_JSON")
-            }
-
+            this.validaExtensão()
+            const conteudo = this.arquivo.buffer.toString('utf8');
+            JSON.parse(conteudo)
+            console.log("Arquivo validado com sucesso");
+            return
+        } catch  {
+            throw new FileValidationError ("INVALID_JSON")
         }
+    }
 
-        if(tipoArquivo === Arquivo.TIPOS.excel) {
-             
+    validaExcel(){
+
+        try {
+
+            this.validaExtensão()
+
             //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
             
-            for (let i =0; i < assinatura.length; i++) {
-                if(assinatura[i] != Arquivo.TIPOS.excel.assinatura[i]){
+            for (let i =0; i < this.assinatura.length; i++) {
+                if(this.assinatura[i] != Arquivo.TIPOS.excel.assinaturaPermitida[i]){
                     throw new FileValidationError('INVALID_EXCEL')
                 }
             }            
 
             console.log("Arquivo validado com sucesso");
             return
-        }
 
-        throw new FileValidationError('UNSUPPORTED_TYPE')
+        } catch {
+            throw new FileValidationError('UNSUPPORTED_TYPE') 
+        }
     }
  }
