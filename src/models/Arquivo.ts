@@ -3,7 +3,7 @@ import { FileValidationError } from './AppError'
 
 export interface tiposInterface {
     extensao: string,
-    assinaturaPermitida?: number[]
+    assinaturaPermitida?: Buffer
 }
 
 export class Arquivo {
@@ -65,23 +65,17 @@ export class Arquivo {
 
     validaExcel(){
 
-        try {
+        this.validaExtensão()
 
-            this.validaExtensão()
+        //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
+        
+        for (let i =0; i < this.assinatura.length; i++) {
+            if(this.assinatura[i] != Arquivo.TIPOS.excel.assinaturaPermitida[i]){
+                throw new FileValidationError('INVALID_EXCEL')
+            }
+        }            
 
-            //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
-            
-            for (let i =0; i < this.assinatura.length; i++) {
-                if(this.assinatura[i] != Arquivo.TIPOS.excel.assinaturaPermitida[i]){
-                    throw new FileValidationError('INVALID_EXCEL')
-                }
-            }            
-
-            console.log("Arquivo validado com sucesso");
-            return
-
-        } catch {
-            throw new FileValidationError('UNSUPPORTED_TYPE') 
-        }
+        console.log("Arquivo validado com sucesso");
+        return
     }
  }

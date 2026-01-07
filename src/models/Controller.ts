@@ -29,11 +29,24 @@ export class Controller {
             }
             
             //Cria o objeto arquivo
-            const arquivo = new Arquivo(req.file)
-            
+            const arquivo = new Arquivo(req.file, this.arquivoEsperado)
+
             // valida o se o arquivo está correto
-            await arquivo.validaArquivo(this.arquivoEsperado)        
-            
+
+            switch (true) {
+                case this.arquivoEsperado === Arquivo.TIPOS.json: 
+                    arquivo.validaJson()
+                    break;
+                
+                case this.arquivoEsperado === Arquivo.TIPOS.excel:
+                    arquivo.validaExcel()
+                    break;
+
+                default:
+                    throw new FileValidationError('UNSUPPORTED_TYPE')
+            }
+
+                        
             //envia o arquivo validado e funcional(req) req para a API do Python
             await this.callAPIPython.enviaParaAPI(req, res)
             
