@@ -1,3 +1,14 @@
+É um projeto open source em desenvolvimento que propõe uma alternativa ao iLovePDF, 
+oferecendo uma aplicação e API voltadas para conversão e manipulação de arquivos em diferentes formatos. 
+A plataforma permite transformar dados entre múltiplos tipos, como converter arquivos JSON em planilhas Excel 
+e vice-versa, facilitando a interoperabilidade entre sistemas e fluxos de dados. 
+O backend é desenvolvido em TypeScript utilizando Express, enquanto a camada de processamento e conversão é 
+construída em Python, com suporte de bibliotecas como Pandas para tratamento e estruturação de dados. 
+A arquitetura separa responsabilidades entre servidor e engine de processamento, garantindo escalabilidade, 
+organização e facilidade de manutenção. O projeto demonstra domínio em desenvolvimento backend, integração 
+entre linguagens, criação de APIs e manipulação avançada de dados.
+
+
 PARA INICIAR O SERVIDOR TYPESCRIPT
 
 PROD: npm start
