@@ -1,0 +1,308 @@
+# GoodbyePDF API
+
+Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
+
+A arquitetura separa duas responsabilidades:
+
+- **Servidor TypeScript (Express)**: serve o frontend, recebe os uploads, valida os arquivos e encaminha para o conversor.
+- **Serviço de conversão Python (FastAPI + Pandas)**: faz a conversão propriamente dita e devolve o arquivo convertido.
+
+---
+
+## Sumário
+
+- [Arquitetura](#arquitetura)
+- [Estrutura de pastas](#estrutura-de-pastas)
+- [Pré-requisitos](#pré-requisitos)
+- [Configuração (.env)](#configuração-env)
+- [Como executar](#como-executar)
+- [Endpoints](#endpoints)
+- [Validação de arquivos e erros](#validação-de-arquivos-e-erros)
+- [Frontend](#frontend)
+- [Testes](#testes)
+- [Pendências conhecidas](#pendências-conhecidas)
+
+---
+
+## Arquitetura
+
+```
+┌──────────────┐   multipart/form-data   ┌────────────────────────┐   multipart/form-data   ┌──────────────────────┐
+│   Frontend   │ ──────────────────────▶ │  Servidor TypeScript   │ ──────────────────────▶ │  Conversor Python    │
+│ (HTML + JS)  │        campo "arquivo"  │  Express + Multer      │        campo "arquivo"  │  FastAPI + Pandas    │
+│              │ ◀────────────────────── │  valida extensão e     │ ◀────────────────────── │  converte e devolve  │
+│  download    │    arquivo convertido   │  conteúdo do arquivo   │    arquivo convertido   │  os bytes do arquivo │
+└──────────────┘                         └────────────────────────┘                         └──────────────────────┘
+```
+
+Fluxo de uma requisição:
+
+1. O usuário envia o arquivo por uma das páginas do frontend (ou direto pela API).
+2. O Express recebe o upload com o **Multer** (em memória, `memoryStorage`).
+3. O `Controller` cria um objeto `Arquivo` e valida extensão e conteúdo (JSON parseável ou assinatura de Excel).
+4. O `CallAPIPython` repassa o arquivo validado para o serviço Python (`CONVERSOR_API_URL` + endpoint).
+5. O Python converte com Pandas e devolve os bytes. O Express repassa a resposta ao cliente, que dispara o download.
+
+---
+
+## Estrutura de pastas
+
+```
+goodbyepdf_api/
+├── src/                          # Servidor TypeScript (Express)
+│   ├── index.ts                  # Ponto de entrada: carrega .env e sobe o servidor
+│   ├── app.ts                    # Configura Express, CORS, arquivos estáticos e rotas
+│   ├── router/
+│   │   ├── goodbyepdfRouter.ts   # Rotas de upload (/xlsx-json, /json-xlsx) com Multer
+│   │   └── goodbyepdfPagesRouter.ts  # (desativado) rotas antigas de páginas
+│   ├── controllers/
+│   │   └── arquivosController.ts # Instâncias de Controller para cada conversão
+│   ├── models/
+│   │   ├── Controller.ts         # Fluxo de upload: valida → envia ao Python → trata erros
+│   │   ├── Arquivo.ts            # Validação de extensão, JSON e assinatura do Excel
+│   │   ├── AppError.ts           # Hierarquia de erros (AppError, ValidationError, FileValidationError)
+│   │   └── __tests__/            # Testes com Jest
+│   ├── services/
+│   │   └── CallAPIPython.ts      # Cliente HTTP (axios) para o serviço Python
+│   └── constants/
+│       ├── endpoinsApi.ts        # Endpoints do serviço Python
+│       └── errorMessages.ts      # Mensagens e códigos de erro
+│
+├── python-service/               # Serviço de conversão (FastAPI)
+│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json e /api/json-xlsx
+│   ├── run.py                    # Execução em desenvolvimento (lê o .env)
+│   ├── controllers/
+│   │   ├── xlsx_json_controller.py
+│   │   └── json_xlsx_controller.py
+│   ├── models/
+│   │   ├── Gerenciador_xlsx.py   # Excel → JSON (pandas.read_excel / to_json)
+│   │   └── Gerenciador_json.py   # JSON → Excel (pandas.read_json / to_excel)
+│   └── requirements.txt
+│
+├── frontend/public/              # Frontend estático servido pelo Express
+│   ├── pages/
+│   │   ├── home/index.html
+│   │   ├── jsonForXlsx/jsonForXlsx.html
+│   │   └── xlsxForJson/xlsxForJson.html
+│   └── shared/js/
+│       ├── models/Arquivo.js     # Validação de extensão no cliente e envio do arquivo
+│       └── utils/geraDownload.js # Converte a resposta em blob e dispara o download
+│
+├── postman-testes/               # Arquivos de exemplo usados em testes manuais
+├── package.json
+├── tsconfig.json
+└── jest.config.js
+```
+
+---
+
+## Pré-requisitos
+
+- **Node.js** 20+ e npm
+- **Python** 3.13+ e pip
+
+---
+
+## Configuração (.env)
+
+Os dois serviços leem variáveis de ambiente de arquivos `.env`, que não são versionados.
+
+### Servidor TypeScript: `./.env`
+
+| Variável            | Descrição                                          | Exemplo                 |
+|---------------------|----------------------------------------------------|-------------------------|
+| `HOST`              | Host exibido no log de inicialização               | `http://localhost`      |
+| `PORT`              | Porta do servidor Express                          | `3000`                  |
+| `CONVERSOR_API_URL` | URL base do serviço Python (sem barra no final)    | `http://localhost:5000` |
+
+### Serviço Python: `./python-service/.env`
+
+Usado apenas pelo `run.py`.
+
+| Variável    | Descrição                                  | Exemplo   |
+|-------------|--------------------------------------------|-----------|
+| `HOST`      | Host do uvicorn                            | `0.0.0.0` |
+| `PORT`      | Porta do uvicorn                           | `5000`    |
+| `RELOAD`    | Recarrega automaticamente ao salvar        | `true`    |
+| `LOG_LEVEL` | Nível de log do uvicorn                    | `info`    |
+| `WORKERS`   | Número de workers (**obrigatório**)        | `1`       |
+
+> O `run.py` falha se `WORKERS` não estiver definido. Com `RELOAD=true`, o uvicorn ignora `WORKERS`.
+
+---
+
+## Como executar
+
+Suba os dois serviços. O Express depende do Python para converter.
+
+### 1. Serviço Python
+
+```bash
+cd python-service
+python -m venv myvenv
+source myvenv/bin/activate        # Windows: myvenv\Scripts\activate
+pip install -r requirements.txt
+
+# Desenvolvimento
+python run.py
+
+# Produção
+uvicorn main:app --host 0.0.0.0 --port 5000 --workers 4
+```
+
+A documentação interativa do FastAPI fica em `http://localhost:5000/docs`.
+
+### 2. Servidor TypeScript
+
+```bash
+npm install
+
+# Desenvolvimento (hot reload)
+npm run dev
+
+# Produção
+npm run build
+npm start
+```
+
+---
+
+## Endpoints
+
+### Servidor TypeScript (público)
+
+Ambos recebem `multipart/form-data` com o arquivo no campo **`arquivo`**.
+
+| Método | Rota         | Entrada         | Saída                         |
+|--------|--------------|-----------------|-------------------------------|
+| POST   | `/xlsx-json` | arquivo `.xlsx` | JSON (lista de objetos)       |
+| POST   | `/json-xlsx` | arquivo `.json` | planilha `.xlsx` (binário)    |
+
+Exemplos:
+
+```bash
+# Excel → JSON
+curl -X POST http://localhost:3000/xlsx-json \
+  -F "arquivo=@planilha.xlsx" \
+  -o resultado.json
+
+# JSON → Excel
+curl -X POST http://localhost:3000/json-xlsx \
+  -F "arquivo=@dados.json" \
+  -o resultado.xlsx
+```
+
+### Serviço Python (interno)
+
+Chamado pelo Express. Usa o mesmo campo `arquivo`.
+
+| Método | Rota             | Descrição                                                         |
+|--------|------------------|-------------------------------------------------------------------|
+| POST   | `/api/xlsx-json` | Lê a planilha com Pandas e devolve JSON (`orient="records"`, indentado) |
+| POST   | `/api/json-xlsx` | Lê o JSON com Pandas e devolve um `.xlsx` gerado com `openpyxl`   |
+
+As respostas incluem o header `Content-Disposition: attachment; filename=<nome original>`.
+
+### Formato esperado
+
+Excel → JSON: cada linha da primeira aba vira um objeto, e o cabeçalho define as chaves.
+
+| nome  | idade |
+|-------|-------|
+| Ana   | 30    |
+| Bruno | 25    |
+
+```json
+[
+    { "nome": "Ana", "idade": 30 },
+    { "nome": "Bruno", "idade": 25 }
+]
+```
+
+JSON → Excel: o caminho inverso. Envie uma lista de objetos com as mesmas chaves.
+
+---
+
+## Validação de arquivos e erros
+
+O Express valida o arquivo antes de enviá-lo ao Python (`src/models/Arquivo.ts`):
+
+- **Extensão**: precisa ser `.json` ou `.xlsx`, conforme a rota. A comparação ignora maiúsculas e minúsculas.
+- **JSON**: o conteúdo precisa ser válido para `JSON.parse`.
+- **Excel**: os 6 primeiros bytes precisam bater com a assinatura ZIP/OOXML (`50 4B 03 04 14 00`).
+
+Erros de validação respondem assim:
+
+```json
+{
+  "success": false,
+  "mensagem": "Extensão não permitida. Use um arquivo com a extensão: .xlsx",
+  "code": "INVALID_EXTENSION"
+}
+```
+
+| Código                 | Status | Quando ocorre                                  |
+|------------------------|--------|------------------------------------------------|
+| `NO_FILE`              | 400    | Nenhum arquivo no campo `arquivo`              |
+| `INVALID_EXTENSION`    | 400    | Extensão diferente da esperada pela rota       |
+| `INVALID_JSON`         | 400    | JSON malformado (ou extensão errada na rota JSON) |
+| `INVALID_EXCEL`        | 400    | Assinatura do arquivo não corresponde a um `.xlsx` |
+| `UNSUPPORTED_TYPE`     | 400    | Tipo de arquivo sem validação implementada     |
+| `INVALID_OR_CORRUPTED` | 400    | Erro de validação sem mensagem específica      |
+| —                      | 500    | Falha no serviço Python ou erro inesperado     |
+
+Se a falha acontecer no Python, a resposta é:
+
+```json
+{ "mensagem": "Erro ao processar arquivo no Python", "erro": "..." }
+```
+
+### Hierarquia de erros
+
+```
+Error
+└── AppError            (message, code)
+    └── ValidationError       → HTTP 404
+        └── FileValidationError → HTTP 400 (mensagem vem de constants/errorMessages.ts)
+```
+
+### Como adicionar uma nova conversão
+
+1. Crie o conversor no Python (`models/` + `controllers/`) e registre a rota em `main.py`.
+2. Adicione o endpoint em `src/constants/endpoinsApi.ts`.
+3. Se o tipo de entrada for novo, adicione-o em `Arquivo.TIPOS`, crie o método de validação e inclua o `case` correspondente em `Controller.handleUpload`.
+4. Instancie o controller em `src/controllers/arquivosController.ts` e registre a rota em `src/router/goodbyepdfRouter.ts`.
+
+---
+
+## Frontend
+
+O Express serve os arquivos de `frontend/public` como estáticos:
+
+- `/pages/home/index.html`: página inicial
+- `/pages/jsonForXlsx/jsonForXlsx.html`: conversão JSON → Excel
+- `/pages/xlsxForJson/xlsxForJson.html`: conversão Excel → JSON
+
+As páginas validam a extensão no navegador (`shared/js/models/Arquivo.js`), enviam o arquivo para `/json-xlsx` ou `/xlsx-json` e disparam o download com `shared/js/utils/geraDownload.js`.
+
+> O CORS do Express aceita apenas a origem `https://willian-ribeiro.com`. Para consumir a API a partir de outra origem, ajuste `src/app.ts`.
+
+---
+
+## Testes
+
+```bash
+npm test
+```
+
+Os testes ficam em `src/models/__tests__/` e usam Jest com ts-jest.
+
+---
+
+## Pendências conhecidas
+
+- Os testes em `src/models/__tests__/` estão **desatualizados**: usam `validaArquivo` e `FactoryController`, que não existem mais. Hoje eles falham.
+- `python-service/models/Gerenciador_json.py` importa `chardet`, que não está em `requirements.txt`.
+- `CallAPIPython.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
+- O Multer não tem limite de tamanho de arquivo configurado.
+- Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.
