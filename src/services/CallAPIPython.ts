@@ -14,6 +14,16 @@ export class CallAPIPython {
         this.endpoint = endepoint
     }
 
+    // retorna true se o serviço Python responder no /health
+    async verificaSaude(): Promise<boolean> {
+        try {
+            await axios.get(`${this.baseURL}/health`, { timeout: 3000 })
+            return true
+        } catch {
+            return false
+        }
+    }
+
     async enviaParaAPI(req: Request, res: Response) {
 
         console.log( `Enviando para a API do Python em ${this.baseURL}${this.endpoint}`);
@@ -66,10 +76,31 @@ export class CallAPIPython {
             //     fs.unlinkSync(req.file.path);
             // }        
 
+            const status = error.response?.status
+
+            // a resposta vem em arraybuffer, então o corpo de erro precisa ser decodificado
+            let detalhe = error.message
+            if (error.response?.data) {
+                const texto = Buffer.from(error.response.data).toString('utf8')
+                try {
+                    detalhe = JSON.parse(texto).detail ?? texto
+                } catch {
+                    detalhe = texto
+                }
+            }
+
+            // erro no arquivo enviado (ex.: 422): repassa o status do Python para o cliente
+            if (status >= 400 && status < 500) {
+                return res.status(status).json({
+                    success: false,
+                    mensagem: detalhe
+                });
+            }
+
             return res.status(500).json({
                 mensagem: "Erro ao processar arquivo no Python",
-                erro: error.response?.data || error.message 
-            });   
+                erro: detalhe
+            });
         }
     }
 }

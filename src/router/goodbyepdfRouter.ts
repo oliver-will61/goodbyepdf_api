@@ -3,6 +3,7 @@ import express from 'express'
 import multer from 'multer'
 
 import {xlsxForJsonController, jsonForXlsxController} from '../controllers/arquivosController'
+import { CallAPIPython } from '../services/CallAPIPython'
 
 const router = express.Router();
 
@@ -32,6 +33,15 @@ router.post('/xlsx-json', upload.single('arquivo'), async (req, res, next) => {
 
 router.post('/json-xlsx', upload.single('arquivo'), async (req, res, next ) => {
     jsonForXlsxController.handleUpload(req, res).catch(next)
+})
+
+// verifica se o servidor e o serviço de conversão (Python) estão no ar
+router.get('/health', async (req, res) => {
+    const conversorOk = await new CallAPIPython('').verificaSaude()
+    res.status(conversorOk ? 200 : 503).json({
+        status: conversorOk ? 'ok' : 'degradado',
+        conversor: conversorOk ? 'ok' : 'indisponível'
+    })
 })
 
 

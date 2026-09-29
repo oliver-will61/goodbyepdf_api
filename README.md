@@ -43,6 +43,18 @@ Fluxo de uma requisição:
 4. O `CallAPIPython` repassa o arquivo validado para o serviço Python (`CONVERSOR_API_URL` + endpoint).
 5. O Python converte com Pandas e devolve os bytes. O Express repassa a resposta ao cliente, que dispara o download.
 
+### Serviço interno
+
+O conversor Python é um **serviço interno**. Só o Express o chama, de servidor para servidor. Por isso:
+
+- **Não fica exposto à internet.** No `docker-compose.yml` ele não publica porta, e o Express o acessa pela rede interna (`http://conversor:5000`).
+- **Não usa CORS.** CORS é uma regra do navegador, e o navegador nunca fala direto com o conversor.
+- **Tem um contrato.** O FastAPI gera a documentação OpenAPI em `/docs`.
+- **Expõe `GET /health`.** O Express e o orquestrador usam essa rota para saber se o serviço está no ar.
+- **Repassa os erros com o status certo.** Conteúdo que o Pandas não consegue ler gera 422, e o Express devolve esse status ao cliente em vez de um 500.
+
+Se surgirem conversões pesadas (PDF, arquivos grandes), o próximo passo é trocar a chamada síncrona por uma fila: Redis + worker, com `job_id` e consulta de status.
+
 ---
 
 ## Estrutura de pastas
@@ -77,6 +89,7 @@ goodbyepdf_api/
 │   ├── models/
 │   │   ├── Gerenciador_xlsx.py   # Excel → JSON (pandas.read_excel / to_json)
 │   │   └── Gerenciador_json.py   # JSON → Excel (pandas.read_json / to_excel)
+│   ├── Dockerfile                # Imagem do conversor
 │   └── requirements.txt
 │
 ├── frontend/public/              # Frontend estático servido pelo Express
@@ -89,6 +102,8 @@ goodbyepdf_api/
 │       └── utils/geraDownload.js # Converte a resposta em blob e dispara o download
 │
 ├── postman-testes/               # Arquivos de exemplo usados em testes manuais
+├── Dockerfile                    # Imagem do servidor Express
+├── docker-compose.yml            # Sobe api (pública) + conversor (interno)
 ├── package.json
 ├── tsconfig.json
 └── jest.config.js
@@ -132,6 +147,16 @@ Usado apenas pelo `run.py`.
 ---
 
 ## Como executar
+
+### Com Docker (recomendado)
+
+```bash
+docker compose up --build
+```
+
+A aplicação sobe em `http://localhost:3000`. O conversor fica acessível só dentro da rede do compose. Com Podman, use `podman compose up --build` (requer `podman-compose` ou `docker-compose` instalado).
+
+### Sem Docker
 
 Suba os dois serviços. O Express depende do Python para converter.
 
@@ -177,6 +202,7 @@ Ambos recebem `multipart/form-data` com o arquivo no campo **`arquivo`**.
 |--------|--------------|-----------------|-------------------------------|
 | POST   | `/xlsx-json` | arquivo `.xlsx` | JSON (lista de objetos)       |
 | POST   | `/json-xlsx` | arquivo `.json` | planilha `.xlsx` (binário)    |
+| GET    | `/health`    | —               | `200` se o Express e o conversor estão no ar; `503` se o conversor está fora |
 
 Exemplos:
 
@@ -200,6 +226,7 @@ Chamado pelo Express. Usa o mesmo campo `arquivo`.
 |--------|------------------|-------------------------------------------------------------------|
 | POST   | `/api/xlsx-json` | Lê a planilha com Pandas e devolve JSON (`orient="records"`, indentado) |
 | POST   | `/api/json-xlsx` | Lê o JSON com Pandas e devolve um `.xlsx` gerado com `openpyxl`   |
+| GET    | `/health`        | Retorna `{"status": "ok"}`                                        |
 
 As respostas incluem o header `Content-Disposition: attachment; filename=<nome original>`.
 
@@ -249,9 +276,16 @@ Erros de validação respondem assim:
 | `INVALID_EXCEL`        | 400    | Assinatura do arquivo não corresponde a um `.xlsx` |
 | `UNSUPPORTED_TYPE`     | 400    | Tipo de arquivo sem validação implementada     |
 | `INVALID_OR_CORRUPTED` | 400    | Erro de validação sem mensagem específica      |
-| —                      | 500    | Falha no serviço Python ou erro inesperado     |
+| —                      | 422    | Arquivo válido, mas o Pandas não conseguiu converter o conteúdo (ex.: JSON que não é uma lista de objetos) |
+| —                      | 500    | Falha inesperada no serviço Python ou no Express |
 
-Se a falha acontecer no Python, a resposta é:
+Quando o Python recusa o conteúdo (422), a resposta é:
+
+```json
+{ "success": false, "mensagem": "Não foi possível converter o arquivo JSON: ..." }
+```
+
+Em falhas inesperadas (500):
 
 ```json
 { "mensagem": "Erro ao processar arquivo no Python", "erro": "..." }
@@ -302,7 +336,6 @@ Os testes ficam em `src/models/__tests__/` e usam Jest com ts-jest.
 ## Pendências conhecidas
 
 - Os testes em `src/models/__tests__/` estão **desatualizados**: usam `validaArquivo` e `FactoryController`, que não existem mais. Hoje eles falham.
-- `python-service/models/Gerenciador_json.py` importa `chardet`, que não está em `requirements.txt`.
 - `CallAPIPython.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - O Multer não tem limite de tamanho de arquivo configurado.
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.

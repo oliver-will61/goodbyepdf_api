@@ -43,5 +43,7 @@
     "esModuleInterop": true,
     "moduleResolution": "node"
   },
-    "include": ["src"]
+    "include": ["src"],
+    // testes são rodados pelo ts-jest e não entram no build
+    "exclude": ["src/**/__tests__"]
 }

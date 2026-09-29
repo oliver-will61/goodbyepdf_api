@@ -1,16 +1,16 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
 from controllers.xlsx_json_controller import xlsx_json_controller
 from controllers.json_xlsx_controller import json_xlsx_controller
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# serviço interno: só é chamado pelo servidor Express (servidor para servidor),
+# por isso não usa CORS e não deve ser exposto publicamente
+
+# usado pelo Express e pelo orquestrador para saber se o serviço está no ar
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
 # xlsx -> json

@@ -1,0 +1,23 @@
+services:
+  # porta de entrada pública: frontend, validação e repasse para o conversor
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      HOST: http://localhost
+      PORT: 3000
+      # "conversor" é resolvido pelo DNS interno da rede do compose
+      CONVERSOR_API_URL: http://conversor:5000
+    depends_on:
+      conversor:
+        condition: service_healthy
+
+  # serviço interno: sem "ports", então não fica acessível fora da rede do compose
+  conversor:
+    build: ./python-service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3

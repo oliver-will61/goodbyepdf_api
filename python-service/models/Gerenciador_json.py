@@ -1,5 +1,4 @@
 import pandas as pd
-import chardet
 from io import BytesIO, StringIO
 
 class Gerenciado_json:
