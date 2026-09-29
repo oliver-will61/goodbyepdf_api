@@ -10,7 +10,7 @@ export class Arquivo {
 
     public arquivo: Express.Multer.File   
     public arquivoEsperado: tiposInterface 
-    private assinatura: Buffer = this.capturaAssinatura()
+    private assinatura: Buffer
     
 
     static TIPOS = {
@@ -26,6 +26,8 @@ export class Arquivo {
     constructor (arquivo: Express.Multer.File, arquivoEsperado: tiposInterface) {
         this.arquivo = arquivo
         this.arquivoEsperado = arquivoEsperado
+        // precisa vir depois de this.arquivo: inicializadores de campo rodam antes do constructor
+        this.assinatura = this.capturaAssinatura()
     }
 
     capturaAssinatura(): Buffer {
