@@ -2,6 +2,10 @@ import { Arquivo } from '../Arquivo';
 import {FileValidationError} from '../AppError'
 import { error } from 'console';
 
+
+// DESATUALIZADO
+
+
 // Mock para o arquivo do Multer
 const criarMockArquivo = (originalname: string, bufferContent?: Buffer, mimetype?: string): Express.Multer.File => ({
     fieldname: 'arquivo',

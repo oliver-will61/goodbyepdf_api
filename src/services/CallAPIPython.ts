@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
-import fs from 'fs';
 import axios from 'axios';
 import FormData from 'form-data';
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 export class CallAPIPython {
     private baseURL: string
@@ -14,7 +16,7 @@ export class CallAPIPython {
 
     async enviaParaAPI(req: Request, res: Response) {
 
-        console.log("Enviando para a API do Python...");
+        console.log( `Enviando para a API do Python em ${this.baseURL}${this.endpoint}`);
 
         try {
             
