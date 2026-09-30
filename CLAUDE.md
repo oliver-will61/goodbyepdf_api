@@ -24,10 +24,11 @@ O `README.md` tem a documentação completa (endpoints, códigos de erro, variá
 ```bash
 # Tudo com Docker (api em :3000, conversor só na rede interna)
 docker compose up --build
+npm run docker:dev   # modo dev com Docker (override docker-compose.dev.yml): bind mounts + hot reload + Tailwind watch
 
 # Servidor TypeScript
 npm install
-npm run dev          # gera o CSS e sobe ts-node-dev com hot reload (src/index.ts)
+npm run dev          # gera o CSS (sem minificar) e sobe ts-node-dev com hot reload (src/index.ts)
 npm run dev:css      # Tailwind em modo watch (rodar em outro terminal)
 npm run build        # tsc → dist/ + CSS minificado do Tailwind
 npm start            # node dist/index.js

@@ -181,6 +181,26 @@ sudo usermod -aG docker $USER
 
 > Estar no grupo `docker` equivale a ter acesso root na máquina. Se preferir não fazer isso, rode `sudo docker compose up --build`.
 
+#### Modo desenvolvimento
+
+O comando acima sobe o modo de **produção**: o código é copiado para a imagem, e qualquer mudança exige `--build`. Para desenvolver com Docker, use o override `docker-compose.dev.yml`:
+
+```bash
+npm run docker:dev
+# equivale a:
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Nesse modo, `src/`, `frontend/` e `python-service/` são montados nos containers, e as mudanças aparecem sem rebuild:
+
+| Serviço     | O que faz                                                         |
+|-------------|-------------------------------------------------------------------|
+| `api`       | `npm run dev` (ts-node-dev): reinicia ao salvar arquivos `.ts`     |
+| `css`       | Tailwind em modo watch: recompila o `styles.css` (legível) ao salvar HTML, JS ou `main.css` |
+| `conversor` | `uvicorn --reload`: recarrega ao salvar arquivos `.py`             |
+
+Mudanças no `package.json` ou no `requirements.txt` exigem subir de novo com `--build`. Os containers do Node rodam com o usuário `node` (UID 1000) para que os arquivos gerados nas pastas montadas não fiquem com dono `root`; se o seu UID for outro, ajuste o `user` no `docker-compose.dev.yml`.
+
 ### Sem Docker
 
 Suba os dois serviços. O Express depende do Python para converter.
@@ -207,7 +227,7 @@ A documentação interativa do FastAPI fica em `http://localhost:5000/docs`.
 ```bash
 npm install
 
-# Desenvolvimento (hot reload); gera o CSS do Tailwind antes de subir
+# Desenvolvimento (hot reload); gera o CSS do Tailwind (legível, sem minificar) antes de subir
 npm run dev
 
 # Em outro terminal, para recompilar o CSS a cada mudança no HTML/JS/CSS
@@ -353,7 +373,7 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 ### Estilos (Tailwind)
 
 - A entrada é `frontend/src/styles/main.css`. O Tailwind lê as classes usadas nos HTML e JS de `frontend/public` e gera `frontend/public/assets/css/styles.css`.
-- Scripts: `npm run build:css` (minificado), `npm run dev:css` (modo watch). O `npm run build` e o `npm run dev` já geram o CSS; no Docker, ele é gerado na etapa de build da imagem.
+- Scripts: `npm run build:css` (minificado), `npm run dev:css` (modo watch). O `npm run build` já gera o CSS minificado e o `npm run dev` gera o CSS legível (sem minificar); no Docker, ele é gerado na etapa de build da imagem.
 - **Cor primária**: vermelho `#EA1D2C`, definido em `@theme` como a escala `primary-50` … `primary-950` (classes `bg-primary`, `text-primary-600` etc.). O fundo é branco no modo claro.
 - **Componentes** reutilizados ficam em `@layer components`: `.btn-primary`, `.btn-secondary`, `.nav-link` e `.card`.
 - Como o Tailwind só encontra classes escritas por inteiro, não monte nomes de classe por concatenação no JS (ex.: `'bg-' + cor`).
