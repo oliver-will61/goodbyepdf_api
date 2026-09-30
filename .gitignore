@@ -3,3 +3,5 @@ node_modules
 /dist
 /upload/*
 /postman-testes
+# CSS gerado pelo Tailwind (npm run build:css)
+/frontend/public/assets/css/styles.css

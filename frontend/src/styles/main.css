@@ -1,0 +1,88 @@
+/*
+  Folha de estilos de entrada do Tailwind CSS (v4).
+  O CSS final é gerado em frontend/public/assets/css/styles.css com:
+    npm run build:css   (uma vez, minificado)
+    npm run dev:css     (modo watch, durante o desenvolvimento)
+*/
+@import "tailwindcss";
+
+/* diz ao Tailwind onde procurar as classes usadas (HTML e JS do frontend) */
+@source "../../public";
+
+/*
+  Modo escuro controlado por classe: o <html> recebe a classe "dark"
+  (ver assets/js/components/tema.js), permitindo o botão de alternar tema
+  em vez de depender só da preferência do sistema.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Tokens de design do projeto.
+  "primary" é o vermelho da marca (#EA1D2C) com tons mais claros e mais escuros
+  para hover, foco e fundos suaves. Viram classes como bg-primary, text-primary-700 etc.
+*/
+@theme {
+  --color-primary-50: #fef2f3;
+  --color-primary-100: #fde3e5;
+  --color-primary-200: #fbcbcf;
+  --color-primary-300: #f7a3aa;
+  --color-primary-400: #f06c77;
+  --color-primary-500: #ea1d2c;
+  --color-primary-600: #d41826;
+  --color-primary-700: #b1121e;
+  --color-primary-800: #93131d;
+  --color-primary-900: #7a161e;
+  --color-primary-950: #43060b;
+  --color-primary: #ea1d2c;
+}
+
+/* estilos base aplicados a todas as páginas */
+@layer base {
+  html {
+    /* rolagem suave para os links âncora (ex.: #como-funciona) */
+    scroll-behavior: smooth;
+    /* informa ao navegador o esquema de cores (barras de rolagem, inputs nativos) */
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    /* fundo branco no modo claro e quase preto no modo escuro */
+    @apply bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+  }
+
+  /* anel de foco visível e na cor da marca, para navegação por teclado */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+}
+
+/* componentes reutilizados em mais de uma página */
+@layer components {
+  /* botão principal (vermelho da marca) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-sm shadow-primary/30 transition hover:bg-primary-600 active:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  /* botão secundário (contorno) */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 font-semibold text-zinc-800 transition hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-primary-400 dark:hover:text-primary-400;
+  }
+
+  /* link do menu de navegação; aria-current="page" marca a página atual */
+  .nav-link {
+    @apply rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:text-primary dark:text-zinc-300 dark:hover:text-primary-400;
+  }
+
+  .nav-link[aria-current="page"] {
+    @apply text-primary dark:text-primary-400;
+  }
+
+  /* cartão com borda suave, usado na home e nas páginas de conversão */
+  .card {
+    @apply rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900;
+  }
+}

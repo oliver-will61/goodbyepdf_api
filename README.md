@@ -92,14 +92,23 @@ goodbyepdf_api/
 │   ├── Dockerfile                # Imagem do conversor
 │   └── requirements.txt
 │
-├── frontend/public/              # Frontend estático servido pelo Express
-│   ├── pages/
-│   │   ├── home/index.html
-│   │   ├── jsonForXlsx/jsonForXlsx.html
-│   │   └── xlsxForJson/xlsxForJson.html
-│   └── shared/js/
-│       ├── models/Arquivo.js     # Validação de extensão no cliente e envio do arquivo
-│       └── utils/geraDownload.js # Converte a resposta em blob e dispara o download
+├── frontend/                     # Frontend (HTML + JS puro + Tailwind CSS)
+│   ├── src/styles/main.css       # Entrada do Tailwind: tema (cor primária), modo escuro, componentes
+│   └── public/                   # Servido como estático pelo Express
+│       ├── index.html            # Página inicial (/)
+│       ├── pages/
+│       │   ├── json-para-xlsx.html   # Conversão JSON → Excel
+│       │   └── xlsx-para-json.html   # Conversão Excel → JSON
+│       └── assets/
+│           ├── css/styles.css    # CSS gerado pelo Tailwind (não versionado)
+│           ├── img/favicon.svg
+│           └── js/
+│               ├── components/
+│               │   ├── tema.js   # Alterna modo claro/escuro e salva a escolha
+│               │   └── menu.js   # Menu de navegação em telas pequenas
+│               ├── models/Arquivo.js     # Validação de extensão no cliente e envio do arquivo
+│               ├── pages/conversor.js    # Lógica das páginas de conversão (upload, arrastar e soltar, download)
+│               └── utils/geraDownload.js # Converte a resposta em blob e dispara o download
 │
 ├── postman-testes/               # Arquivos de exemplo usados em testes manuais
 ├── Dockerfile                    # Imagem do servidor Express
@@ -123,6 +132,14 @@ goodbyepdf_api/
 Os dois serviços leem variáveis de ambiente de arquivos `.env`, que não são versionados.
 
 ### Servidor TypeScript: `./.env`
+
+Use o modelo versionado como ponto de partida:
+
+```bash
+cp .env.example .env
+```
+
+> O Docker Compose também lê este arquivo, e o parser dele é mais rígido que o do `dotenv`: comentários precisam começar com `#` e não pode haver espaço ao redor do `=` (`PORT=3000`, não `PORT = 3000`). Caso contrário, o `docker compose` falha com `failed to read .env: ... key cannot contain a space`.
 
 | Variável            | Descrição                                          | Exemplo                 |
 |---------------------|----------------------------------------------------|-------------------------|
@@ -156,6 +173,14 @@ docker compose up --build
 
 A aplicação sobe em `http://localhost:3000`. O conversor fica acessível só dentro da rede do compose. Com Podman, use `podman compose up --build` (requer `podman-compose` ou `docker-compose` instalado).
 
+Se aparecer `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`, seu usuário não tem acesso ao daemon do Docker. Adicione-o ao grupo `docker` e faça logout/login (ou rode `newgrp docker`):
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+> Estar no grupo `docker` equivale a ter acesso root na máquina. Se preferir não fazer isso, rode `sudo docker compose up --build`.
+
 ### Sem Docker
 
 Suba os dois serviços. O Express depende do Python para converter.
@@ -182,13 +207,18 @@ A documentação interativa do FastAPI fica em `http://localhost:5000/docs`.
 ```bash
 npm install
 
-# Desenvolvimento (hot reload)
+# Desenvolvimento (hot reload); gera o CSS do Tailwind antes de subir
 npm run dev
 
-# Produção
+# Em outro terminal, para recompilar o CSS a cada mudança no HTML/JS/CSS
+npm run dev:css
+
+# Produção (compila o TypeScript e gera o CSS minificado)
 npm run build
 npm start
 ```
+
+> O CSS final (`frontend/public/assets/css/styles.css`) é gerado e não fica no repositório. Se as páginas aparecerem sem estilo, rode `npm run build:css`.
 
 ---
 
@@ -306,18 +336,45 @@ Error
 2. Adicione o endpoint em `src/constants/endpoinsApi.ts`.
 3. Se o tipo de entrada for novo, adicione-o em `Arquivo.TIPOS`, crie o método de validação e inclua o `case` correspondente em `Controller.handleUpload`.
 4. Instancie o controller em `src/controllers/arquivosController.ts` e registre a rota em `src/router/goodbyepdfRouter.ts`.
+5. Crie a página no frontend (veja [Páginas de conversão](#páginas-de-conversão)).
 
 ---
 
 ## Frontend
 
-O Express serve os arquivos de `frontend/public` como estáticos:
+O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS v4**. O Express serve `frontend/public` como estático:
 
-- `/pages/home/index.html`: página inicial
-- `/pages/jsonForXlsx/jsonForXlsx.html`: conversão JSON → Excel
-- `/pages/xlsxForJson/xlsxForJson.html`: conversão Excel → JSON
+| URL                           | Página                    |
+|-------------------------------|---------------------------|
+| `/`                           | Página inicial            |
+| `/pages/json-para-xlsx.html`  | Conversão JSON → Excel    |
+| `/pages/xlsx-para-json.html`  | Conversão Excel → JSON    |
 
-As páginas validam a extensão no navegador (`shared/js/models/Arquivo.js`), enviam o arquivo para `/json-xlsx` ou `/xlsx-json` e disparam o download com `shared/js/utils/geraDownload.js`.
+### Estilos (Tailwind)
+
+- A entrada é `frontend/src/styles/main.css`. O Tailwind lê as classes usadas nos HTML e JS de `frontend/public` e gera `frontend/public/assets/css/styles.css`.
+- Scripts: `npm run build:css` (minificado), `npm run dev:css` (modo watch). O `npm run build` e o `npm run dev` já geram o CSS; no Docker, ele é gerado na etapa de build da imagem.
+- **Cor primária**: vermelho `#EA1D2C`, definido em `@theme` como a escala `primary-50` … `primary-950` (classes `bg-primary`, `text-primary-600` etc.). O fundo é branco no modo claro.
+- **Componentes** reutilizados ficam em `@layer components`: `.btn-primary`, `.btn-secondary`, `.nav-link` e `.card`.
+- Como o Tailwind só encontra classes escritas por inteiro, não monte nomes de classe por concatenação no JS (ex.: `'bg-' + cor`).
+
+### Modo escuro
+
+- Controlado pela classe `dark` no `<html>` (variante `dark:` definida com `@custom-variant` em `main.css`).
+- O botão do cabeçalho (`data-alterna-tema`) alterna o tema e salva a escolha no `localStorage` (`tema` = `claro` ou `escuro`). Sem escolha salva, vale a preferência do sistema.
+- Um script inline no `<head>` de cada página aplica o tema antes da renderização, para não "piscar" o modo claro.
+
+### Páginas de conversão
+
+As duas páginas usam o mesmo script, `assets/js/pages/conversor.js`. A conversão é configurada no próprio `<form>`:
+
+```html
+<form data-conversor data-endpoint="/json-xlsx" data-extensao="json" data-extensao-saida="xlsx">
+```
+
+O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`assets/js/models/Arquivo.js`), envia o arquivo para o endpoint e dispara o download com `assets/js/utils/geraDownload.js`. O arquivo convertido mantém o nome original, com a nova extensão. Erros da API (campo `mensagem`) aparecem na própria página.
+
+Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates).
 
 > O CORS do Express aceita apenas a origem `https://willian-ribeiro.com`. Para consumir a API a partir de outra origem, ajuste `src/app.ts`.
 

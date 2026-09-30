@@ -27,8 +27,9 @@ docker compose up --build
 
 # Servidor TypeScript
 npm install
-npm run dev          # ts-node-dev com hot reload (src/index.ts)
-npm run build        # tsc → dist/
+npm run dev          # gera o CSS e sobe ts-node-dev com hot reload (src/index.ts)
+npm run dev:css      # Tailwind em modo watch (rodar em outro terminal)
+npm run build        # tsc → dist/ + CSS minificado do Tailwind
 npm start            # node dist/index.js
 npm test             # Jest + ts-jest
 npx jest src/models/__tests__/Arquivo.test.ts   # um arquivo de teste
@@ -40,7 +41,7 @@ pip install -r requirements.txt
 python run.py        # dev; lê python-service/.env (WORKERS é obrigatório)
 ```
 
-O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex.: `http://localhost:5000`, sem barra final). Sem o Python rodando, as rotas de conversão retornam 500 e `GET /health` retorna 503.
+O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex.: `http://localhost:5000`, sem barra final); modelo em `.env.example`. O Docker Compose também lê esse `.env` e recusa linhas sem `#` ou com espaço ao redor do `=`. Sem o Python rodando, as rotas de conversão retornam 500 e `GET /health` retorna 503.
 
 ## Arquitetura (fluxo de uma conversão)
 
@@ -58,4 +59,7 @@ Mensagens e códigos de erro ficam centralizados em `src/constants/errorMessages
 - Os testes em `src/models/__tests__/` estão desatualizados (usam `validaArquivo` e `FactoryController`, que não existem mais) e falham hoje.
 - `form-data` é importado em `CallAPIPython.ts` mas não está no `package.json` (vem via axios).
 - O CORS em `src/app.ts` só aceita `https://willian-ribeiro.com`.
-- O frontend (`frontend/public`) é JS puro, servido como estático pelo Express; não tem build.
+- O frontend (`frontend/public`) é HTML + JS puro (ES modules), servido como estático pelo Express. O único build é o do Tailwind v4: `frontend/src/styles/main.css` → `frontend/public/assets/css/styles.css` (gerado, no `.gitignore`).
+- Cor primária `#EA1D2C` (escala `primary-*` em `@theme`), fundo branco; modo escuro por classe `dark` no `<html>` (`assets/js/components/tema.js` + script inline no `<head>` de cada página).
+- As páginas de conversão compartilham `assets/js/pages/conversor.js`, configurado pelos `data-*` do `<form>`. Cabeçalho e rodapé são repetidos em cada HTML: ao mudar um, mude em todos.
+- Classes Tailwind precisam aparecer por inteiro no HTML/JS (nada de concatenar nomes de classe).
