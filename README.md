@@ -73,9 +73,10 @@ goodbyepdf_api/
 │   │   ├── Controller.ts         # Fluxo de upload: valida → envia ao Python → trata erros
 │   │   ├── Arquivo.ts            # Validação de extensão, JSON e assinatura do Excel
 │   │   ├── AppError.ts           # Hierarquia de erros (AppError, ValidationError, FileValidationError)
-│   │   └── __tests__/            # Testes com Jest
+│   │   └── __tests__/            # Testes de Arquivo, AppError e Controller
 │   ├── services/
-│   │   └── CallAPIPython.ts      # Cliente HTTP (axios) para o serviço Python
+│   │   ├── CallAPIPython.ts      # Cliente HTTP (axios) para o serviço Python
+│   │   └── __tests__/            # Testes do CallAPIPython (axios mockado)
 │   └── constants/
 │       ├── endpoinsApi.ts        # Endpoints do serviço Python
 │       └── errorMessages.ts      # Mensagens e códigos de erro
@@ -406,13 +407,29 @@ Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste
 npm test
 ```
 
-Os testes ficam em `src/models/__tests__/` e usam Jest com ts-jest.
+Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do código testado. Não precisam do serviço Python nem de rede: as dependências externas são substituídas por mocks.
+
+| Arquivo                                          | O que cobre |
+|--------------------------------------------------|-------------|
+| `src/models/__tests__/Arquivo.test.ts`           | Extensão (inclusive maiúsculas e sem extensão), JSON válido/malformado, assinatura do `.xlsx` |
+| `src/models/__tests__/AppError.test.ts`          | Hierarquia de erros e mensagens centralizadas |
+| `src/models/__tests__/Controller.test.ts`        | Fluxo do `handleUpload` e mapeamento de erros para HTTP (400, 404, 500); `CallAPIPython` mockado |
+| `src/services/__tests__/CallAPIPython.test.ts`   | `/health`, envio ao Python, repasse de 4xx com o corpo decodificado e 500; `axios` mockado |
+
+```bash
+npx jest src/models/__tests__/Arquivo.test.ts   # um arquivo
+npx jest -t "INVALID_JSON"                      # testes pelo nome
+```
+
+O `jest.setup.js` roda antes de cada arquivo de teste (hoje só silencia o aviso do `dotenv`). Os testes ficam fora do build (`exclude` do `tsconfig.json`).
 
 ---
 
 ## Pendências conhecidas
 
-- Os testes em `src/models/__tests__/` estão **desatualizados**: usam `validaArquivo` e `FactoryController`, que não existem mais. Hoje eles falham.
+- `validaExcel` aceita arquivos `.xlsx` com menos de 6 bytes (inclusive vazios): o laço compara só os bytes que existem.
+- `FileValidationError` não usa as mensagens de `INVALID_EXCEL` e `UNSUPPORTED_TYPE` definidas em `errorMessages.ts`; os dois caem na mensagem genérica "Arquivo inválido ou corrompido".
+- Não há testes das rotas HTTP (`goodbyepdfRouter.ts`) nem do JavaScript do frontend.
 - `CallAPIPython.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - O Multer não tem limite de tamanho de arquivo configurado.
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.

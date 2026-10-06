@@ -1,177 +1,139 @@
-import { Arquivo } from '../Arquivo';
-import {FileValidationError} from '../AppError'
-import { error } from 'console';
+import { Arquivo } from '../Arquivo'
+import { FileValidationError } from '../AppError'
+import { ErrorMessagens } from '../../constants/errorMessages'
 
+// assinatura dos 6 primeiros bytes de um .xlsx (ZIP/OOXML)
+const ASSINATURA_XLSX = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00])
 
-// DESATUALIZADO
-
-
-// Mock para o arquivo do Multer
-const criarMockArquivo = (originalname: string, bufferContent?: Buffer, mimetype?: string): Express.Multer.File => ({
+// cria um arquivo no formato que o Multer entrega (memoryStorage)
+const criaArquivoMulter = (originalname: string, buffer: Buffer): Express.Multer.File => ({
     fieldname: 'arquivo',
-    originalname: originalname,
+    originalname,
     encoding: '7bit',
-    mimetype: mimetype || 'application/octet-stream',
-    size: 1024,
+    mimetype: 'application/octet-stream',
+    size: buffer.length,
     destination: '',
     filename: originalname,
     path: '',
-    buffer: bufferContent || Buffer.from(''),
+    buffer,
     stream: null as any
-});
+})
 
-const criarBufferValido = (): Buffer => {
-    const assinaturaExecel = Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00]);
-    const conteudoRestante = Buffer.from('Conteudo do execel');
-    return Buffer.concat([assinaturaExecel, conteudoRestante])
-}
+// conteúdos de exemplo
+const bufferJsonValido = () => Buffer.from(JSON.stringify([{ nome: 'Ana', idade: 30 }]), 'utf8')
+const bufferExcelValido = () => Buffer.concat([ASSINATURA_XLSX, Buffer.from('resto do arquivo')])
 
-const criarBufferJsonValido = (): Buffer => {
-    const jsonValido = JSON.stringify({nome: "Teste", valor: 123});
-    return Buffer.from(jsonValido, 'utf8')
+// executa a validação e devolve o erro lançado (ou falha o teste se nada for lançado)
+const capturaErro = (validacao: () => void): FileValidationError => {
+    try {
+        validacao()
+    } catch (erro) {
+        return erro as FileValidationError
+    }
+    throw new Error('Era esperado que a validação lançasse um erro')
 }
 
 describe('Arquivo', () => {
-    describe('validaArquivo - extensão', () => {
-        it('deve retornar true para arquivo JSON com extensão correta', async () => {
-            const mockFile = criarMockArquivo('dados.json', criarBufferJsonValido(), 'application/json');
-            const arquivo = new Arquivo(mockFile);
-            
-            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['json']);
-            
-            expect(resultado).toBe(true);
-        });
 
-        it('deve retornar true para arquivo XLSX com extensão correta', async () => {
-            const mockFile = criarMockArquivo('planilha.xlsx', criarBufferValido(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            const arquivo = new Arquivo(mockFile);
-            
-            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['excel']);
-            
-            expect(resultado).toBe(true);
-        });
-
-        it('deve funcionar com extensão em maiúsculo no arquivo', async () => {
-            const mockFile = criarMockArquivo('dados.JSON', criarBufferJsonValido(), 'application/json');
-            const arquivo = new Arquivo(mockFile);
-            
-            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['json']);
-            
-            expect(resultado).toBe(true);
-        });
-
-        it('deve lançar erro para arquivo com extensão incorreta', async () => {
-            const mockFile = criarMockArquivo('documento.pdf', Buffer.from(''), 'application/pdf');
-            const arquivo = new Arquivo(mockFile);
-            
-            try {
-                await arquivo.validaArquivo(Arquivo.TIPOS['json'])
-                fail('Deveria ter lançado erro');
-            } catch (error:any) {
-                //verifica tudo de um vez
-                expect(error).toBeInstanceOf(FileValidationError);
-                expect(error.code).toBe('INVALID_EXTENSION')
-                expect(error.message).toContain('.json')
-            } 
-        });
-
-        it('deve lançar erro para arquivo sem extensão', async () => {
-            const mockFile = criarMockArquivo('arquivosemextensao', Buffer.from(''),'text/plain');
-            const arquivo = new Arquivo(mockFile);
-
-            try {
-                await arquivo.validaArquivo(Arquivo.TIPOS['json'])
-                fail('Deveria ter lançado erro');
-            } catch (error:any) {
-                //verifica tudo de um vez
-                expect(error).toBeInstanceOf(FileValidationError);
-                expect(error.code).toBe('INVALID_EXTENSION')
-                expect(error.message).toContain('.json')
-            }   
-        });
-
-        it('deve lançar erro quando a extensão do arquivo não corresponde à permitida', async () => {
-            const mockFile = criarMockArquivo('dados.json', criarBufferValido(), 'application/json');
-            const arquivo = new Arquivo(mockFile);
-
-            try {
-                await arquivo.validaArquivo(Arquivo.TIPOS['excel'])
-                fail('Deveria ter lançado erro');
-            } catch (error:any) {
-                //verifica tudo de um vez
-                expect(error).toBeInstanceOf(FileValidationError);
-                expect(error.code).toBe('INVALID_EXTENSION')
-                expect(error.message).toContain('.xlsx')
-            } 
-        });
-    });
-
-    describe('validaArquivo - Conteúdo', () => {
-
-        //testes positivos
-        it('deve aceitar JSON válido', async () => {
-        
-            const mockFile = criarMockArquivo('dados.json', criarBufferJsonValido(), 'application/json');
-            const arquivo = new Arquivo(mockFile);
-            
-            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['json']);
-            expect(resultado).toBe(true);
-        });
-
-
-        it('deve aceitar Excel com assinatura válida', async () => {
-            const mockFile = criarMockArquivo('planilha.xlsx', criarBufferValido(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            const arquivo = new Arquivo(mockFile);
-            
-            const resultado = await arquivo.validaArquivo(Arquivo.TIPOS['excel']);
-            expect(resultado).toBe(true);
-        });
-
-        // testes negativos
-
-         it('deve lançar erro para JSON inválido', async () => {
-            const jsonInvalido = Buffer.from('{ nome: "Teste"', 'utf8');
-            const mockFile = criarMockArquivo('dados.json', jsonInvalido, 'application/json');
-            const arquivo = new Arquivo(mockFile);
-            
-            try {
-                await arquivo.validaArquivo(Arquivo.TIPOS['json'])
-                fail('Deveria ter lançado erro');
-            } catch (error: any){
-                expect(error).toBeInstanceOf(FileValidationError);
-                expect(error.code).toBe('INVALID_JSON')
-            }
-        });
-
-        it('deve lançar erro para Excel com assinatura inválida', async () => {
-            const bufferInvalido = Buffer.from('não é excel');
-            const mockFile = criarMockArquivo('planilha.xlsx', bufferInvalido);
-            const arquivo = new Arquivo(mockFile);
-
-            try {
-                await arquivo.validaArquivo(Arquivo.TIPOS['excel'])
-                fail('Deveria ter lançado erro');
-            } catch (error: any){
-                expect(error).toBeInstanceOf(FileValidationError);
-                expect(error.code).toBe('INVALID_EXCEL')
-            }
-        });
-
-        it('deve lançar erro para tipo desconhecido', async () => {
-            const mockFile = criarMockArquivo('arquivo.txt', Buffer.from('texto'));
-            const arquivo = new Arquivo(mockFile);
-            
-            const tipoDesconhecido = { extensao: 'txt' };
-
-            try{
-                await arquivo.validaArquivo(tipoDesconhecido);
-                fail('Deveria ter lançado erro');
-            } catch (error: any) {
-                expect(error).toBeInstanceOf(FileValidationError);
-                expect(error.code).toBe('UNSUPPORTED_TYPE')
-            }
-
-        });
-
+    // a classe usa console.log para depuração; silencia para não poluir a saída dos testes
+    beforeEach(() => {
+        jest.spyOn(console, 'log').mockImplementation(() => {})
     })
-});
+
+    afterEach(() => {
+        jest.restoreAllMocks()
+    })
+
+    describe('constructor', () => {
+        it('captura os 6 primeiros bytes do arquivo como assinatura', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('planilha.xlsx', bufferExcelValido()), Arquivo.TIPOS.excel)
+
+            expect(arquivo.capturaAssinatura()).toEqual(ASSINATURA_XLSX)
+        })
+    })
+
+    describe('validaExtensão', () => {
+        it('aceita a extensão esperada', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('dados.json', bufferJsonValido()), Arquivo.TIPOS.json)
+
+            expect(() => arquivo.validaExtensão()).not.toThrow()
+        })
+
+        it('ignora maiúsculas e minúsculas na extensão', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('DADOS.JSON', bufferJsonValido()), Arquivo.TIPOS.json)
+
+            expect(() => arquivo.validaExtensão()).not.toThrow()
+        })
+
+        it('lança INVALID_EXTENSION com a extensão esperada na mensagem', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('documento.pdf', Buffer.from('pdf')), Arquivo.TIPOS.excel)
+
+            const erro = capturaErro(() => arquivo.validaExtensão())
+
+            expect(erro).toBeInstanceOf(FileValidationError)
+            expect(erro.code).toBe('INVALID_EXTENSION')
+            expect(erro.message).toBe(ErrorMessagens.FILE.INVALID_EXTENSION('xlsx'))
+        })
+
+        it('lança INVALID_EXTENSION para arquivo sem extensão', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('arquivosemextensao', Buffer.from('x')), Arquivo.TIPOS.json)
+
+            const erro = capturaErro(() => arquivo.validaExtensão())
+
+            expect(erro.code).toBe('INVALID_EXTENSION')
+        })
+    })
+
+    describe('validaJson', () => {
+        it('aceita um JSON válido', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('dados.json', bufferJsonValido()), Arquivo.TIPOS.json)
+
+            expect(() => arquivo.validaJson()).not.toThrow()
+        })
+
+        it('lança INVALID_JSON para JSON malformado', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('dados.json', Buffer.from('{ nome: "Ana"')), Arquivo.TIPOS.json)
+
+            const erro = capturaErro(() => arquivo.validaJson())
+
+            expect(erro).toBeInstanceOf(FileValidationError)
+            expect(erro.code).toBe('INVALID_JSON')
+            expect(erro.message).toBe(ErrorMessagens.FILE.INVALID_JSON)
+        })
+
+        it('lança INVALID_JSON quando a extensão está errada (comportamento documentado no README)', () => {
+            // validaJson envolve a checagem de extensão no mesmo try/catch
+            const arquivo = new Arquivo(criaArquivoMulter('dados.txt', bufferJsonValido()), Arquivo.TIPOS.json)
+
+            const erro = capturaErro(() => arquivo.validaJson())
+
+            expect(erro.code).toBe('INVALID_JSON')
+        })
+    })
+
+    describe('validaExcel', () => {
+        it('aceita um arquivo com a assinatura de .xlsx', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('planilha.xlsx', bufferExcelValido()), Arquivo.TIPOS.excel)
+
+            expect(() => arquivo.validaExcel()).not.toThrow()
+        })
+
+        it('lança INVALID_EXCEL quando a assinatura não bate', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('planilha.xlsx', Buffer.from('não é excel')), Arquivo.TIPOS.excel)
+
+            const erro = capturaErro(() => arquivo.validaExcel())
+
+            expect(erro).toBeInstanceOf(FileValidationError)
+            expect(erro.code).toBe('INVALID_EXCEL')
+        })
+
+        it('lança INVALID_EXTENSION antes de olhar o conteúdo', () => {
+            const arquivo = new Arquivo(criaArquivoMulter('planilha.xls', bufferExcelValido()), Arquivo.TIPOS.excel)
+
+            const erro = capturaErro(() => arquivo.validaExcel())
+
+            expect(erro.code).toBe('INVALID_EXTENSION')
+            expect(erro.message).toContain('.xlsx')
+        })
+    })
+})

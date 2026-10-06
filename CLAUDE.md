@@ -57,7 +57,8 @@ Mensagens e códigos de erro ficam centralizados em `src/constants/errorMessages
 
 ## Pontos de atenção
 
-- Os testes em `src/models/__tests__/` estão desatualizados (usam `validaArquivo` e `FactoryController`, que não existem mais) e falham hoje.
+- Testes (Jest + ts-jest) em `src/models/__tests__/` e `src/services/__tests__/`; não dependem do Python nem de rede (`CallAPIPython` e `axios` são mockados). `jest.setup.js` silencia o dotenv. Ao mudar validação, erros ou o cliente HTTP, atualize os testes.
+- Bugs conhecidos (sem teste cobrindo, ver "Pendências" do README): `validaExcel` aceita `.xlsx` com menos de 6 bytes; `FileValidationError` usa a mensagem genérica para `INVALID_EXCEL` e `UNSUPPORTED_TYPE`.
 - `form-data` é importado em `CallAPIPython.ts` mas não está no `package.json` (vem via axios).
 - O CORS em `src/app.ts` só aceita `https://willian-ribeiro.com`.
 - O frontend (`frontend/public`) é HTML + JS puro (ES modules), servido como estático pelo Express. O único build é o do Tailwind v4: `frontend/src/styles/main.css` → `frontend/public/assets/css/styles.css` (gerado, no `.gitignore`).
