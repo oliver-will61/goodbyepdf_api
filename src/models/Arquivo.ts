@@ -69,13 +69,12 @@ export class Arquivo {
 
         this.validaExtensão()
 
-        //compara assinatura do arquivoEsperado com a assinaura padrão do Execel
-        
-        for (let i =0; i < this.assinatura.length; i++) {
-            if(this.assinatura[i] != Arquivo.TIPOS.excel.assinaturaPermitida[i]){
-                throw new FileValidationError('INVALID_EXCEL')
-            }
-        }            
+        //compara a assinatura do arquivo com a assinatura padrão do Excel.
+        //equals exige o mesmo tamanho, então arquivos menores que a assinatura
+        //(inclusive vazios) também são recusados
+        if (!this.assinatura.equals(Arquivo.TIPOS.excel.assinaturaPermitida)) {
+            throw new FileValidationError('INVALID_EXCEL')
+        }
 
         console.log("Arquivo validado com sucesso");
         return

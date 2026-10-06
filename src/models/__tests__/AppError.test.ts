@@ -32,6 +32,8 @@ describe('AppError', () => {
         it.each([
             ['NO_FILE', ErrorMessagens.FILE.NO_FILE],
             ['INVALID_JSON', ErrorMessagens.FILE.INVALID_JSON],
+            ['INVALID_EXCEL', ErrorMessagens.FILE.INVALID_EXCEL],
+            ['UNSUPPORTED_TYPE', ErrorMessagens.FILE.UNSUPPORTED_TYPE],
         ] as const)('usa a mensagem centralizada para %s', (codigo, mensagem) => {
             expect(new FileValidationError(codigo).message).toBe(mensagem)
         })

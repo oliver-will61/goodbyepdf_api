@@ -127,6 +127,18 @@ describe('Arquivo', () => {
             expect(erro.code).toBe('INVALID_EXCEL')
         })
 
+        // arquivos menores que a assinatura não podem ser .xlsx válidos
+        it.each([
+            ['vazio', Buffer.alloc(0)],
+            ['só o início da assinatura', ASSINATURA_XLSX.subarray(0, 4)],
+        ])('lança INVALID_EXCEL para arquivo %s', (_descricao, buffer) => {
+            const arquivo = new Arquivo(criaArquivoMulter('planilha.xlsx', buffer), Arquivo.TIPOS.excel)
+
+            const erro = capturaErro(() => arquivo.validaExcel())
+
+            expect(erro.code).toBe('INVALID_EXCEL')
+        })
+
         it('lança INVALID_EXTENSION antes de olhar o conteúdo', () => {
             const arquivo = new Arquivo(criaArquivoMulter('planilha.xls', bufferExcelValido()), Arquivo.TIPOS.excel)
 

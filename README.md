@@ -324,7 +324,7 @@ Erros de validação respondem assim:
 | `NO_FILE`              | 400    | Nenhum arquivo no campo `arquivo`              |
 | `INVALID_EXTENSION`    | 400    | Extensão diferente da esperada pela rota       |
 | `INVALID_JSON`         | 400    | JSON malformado (ou extensão errada na rota JSON) |
-| `INVALID_EXCEL`        | 400    | Assinatura do arquivo não corresponde a um `.xlsx` |
+| `INVALID_EXCEL`        | 400    | Assinatura do arquivo não corresponde a um `.xlsx` (inclusive arquivos com menos de 6 bytes) |
 | `UNSUPPORTED_TYPE`     | 400    | Tipo de arquivo sem validação implementada     |
 | `INVALID_OR_CORRUPTED` | 400    | Erro de validação sem mensagem específica      |
 | —                      | 422    | Arquivo válido, mas o Pandas não conseguiu converter o conteúdo (ex.: JSON que não é uma lista de objetos) |
@@ -427,8 +427,6 @@ O `jest.setup.js` roda antes de cada arquivo de teste (hoje só silencia o aviso
 
 ## Pendências conhecidas
 
-- `validaExcel` aceita arquivos `.xlsx` com menos de 6 bytes (inclusive vazios): o laço compara só os bytes que existem.
-- `FileValidationError` não usa as mensagens de `INVALID_EXCEL` e `UNSUPPORTED_TYPE` definidas em `errorMessages.ts`; os dois caem na mensagem genérica "Arquivo inválido ou corrompido".
 - Não há testes das rotas HTTP (`goodbyepdfRouter.ts`) nem do JavaScript do frontend.
 - `CallAPIPython.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - O Multer não tem limite de tamanho de arquivo configurado.

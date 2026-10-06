@@ -128,7 +128,10 @@ describe('Controller.handleUpload', () => {
             await controller.handleUpload(criaRequest(criaArquivoMulter('planilha.xlsx', Buffer.from('não é excel'))), res)
 
             expect(res.status).toHaveBeenCalledWith(400)
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_EXCEL' }))
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                code: 'INVALID_EXCEL',
+                mensagem: ErrorMessagens.FILE.INVALID_EXCEL
+            }))
         })
 
         it('responde UNSUPPORTED_TYPE para um tipo sem validação implementada', async () => {
@@ -139,7 +142,10 @@ describe('Controller.handleUpload', () => {
             await controller.handleUpload(criaRequest(criaArquivoMulter('doc.pdf', Buffer.from('pdf'))), res)
 
             expect(res.status).toHaveBeenCalledWith(400)
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'UNSUPPORTED_TYPE' }))
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                code: 'UNSUPPORTED_TYPE',
+                mensagem: ErrorMessagens.FILE.UNSUPPORTED_TYPE
+            }))
         })
     })
 

@@ -49,6 +49,14 @@ export class FileValidationError extends ValidationError {
                 message = ErrorMessagens.FILE.NO_FILE;
                 break;
 
+            case ErrorCodes.INVALID_EXCEL:
+                message = ErrorMessagens.FILE.INVALID_EXCEL;
+                break;
+
+            case ErrorCodes.UNSUPPORTED_TYPE:
+                message = ErrorMessagens.FILE.UNSUPPORTED_TYPE;
+                break;
+
             default:
                 message = ErrorMessagens.FILE.INVALID_OR_CORRUPTED
         }
