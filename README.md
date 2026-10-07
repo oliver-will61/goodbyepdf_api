@@ -38,7 +38,7 @@ A arquitetura separa duas responsabilidades:
 Fluxo de uma requisição:
 
 1. O usuário envia o arquivo por uma das páginas do frontend (ou direto pela API).
-2. O Express recebe o upload com o **Multer** em memória (`memoryStorage`): o arquivo fica só em `req.file.buffer`, nada é gravado em disco.
+2. O Express recebe o upload com o **Multer** em memória (`memoryStorage`): o arquivo fica só em `req.file.buffer`, nada é gravado em disco. Arquivos acima de 10 MB são recusados com `413 FILE_TOO_LARGE`.
 3. O `Controller` cria um objeto `Arquivo` e valida extensão e conteúdo (JSON parseável ou assinatura de Excel).
 4. O `CallAPIPython` repassa o arquivo validado para o serviço Python (`CONVERSOR_API_URL` + endpoint).
 5. O Python converte com Pandas e devolve os bytes. O Express repassa a resposta ao cliente, que dispara o download.
@@ -327,6 +327,7 @@ Erros de validação respondem assim:
 | `INVALID_EXCEL`        | 400    | Assinatura do arquivo não corresponde a um `.xlsx` (inclusive arquivos com menos de 6 bytes) |
 | `UNSUPPORTED_TYPE`     | 400    | Tipo de arquivo sem validação implementada     |
 | `INVALID_OR_CORRUPTED` | 400    | Erro de validação sem mensagem específica      |
+| `FILE_TOO_LARGE`       | 413    | Arquivo maior que o limite (10 MB, em `src/constants/limites.ts`) |
 | —                      | 422    | Arquivo válido, mas o Pandas não conseguiu converter o conteúdo (ex.: JSON que não é uma lista de objetos) |
 | —                      | 500    | Falha inesperada no serviço Python ou no Express |
 
@@ -415,7 +416,7 @@ Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do códig
 | `src/models/__tests__/AppError.test.ts`          | Hierarquia de erros e mensagens centralizadas |
 | `src/models/__tests__/Controller.test.ts`        | Fluxo do `handleUpload` e mapeamento de erros para HTTP (400, 404, 500); `CallAPIPython` mockado |
 | `src/services/__tests__/CallAPIPython.test.ts`   | `/health`, envio ao Python, repasse de 4xx com o corpo decodificado e 500; `axios` mockado |
-| `src/router/__tests__/goodbyepdfRouter.test.ts`  | Rotas HTTP com `supertest`: o Multer entrega o arquivo só em memória (sem gravar em disco) e `GET /health` responde 200/503 |
+| `src/router/__tests__/goodbyepdfRouter.test.ts`  | Rotas HTTP com `supertest`: arquivo só em memória (sem gravar em disco), limite de 10 MB (413) e `GET /health` 200/503 |
 
 ```bash
 npx jest src/models/__tests__/Arquivo.test.ts   # um arquivo
@@ -430,5 +431,4 @@ O `jest.setup.js` roda antes de cada arquivo de teste (hoje só silencia o aviso
 
 - Não há testes do JavaScript do frontend.
 - `CallAPIPython.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
-- O Multer não tem limite de tamanho de arquivo configurado. Como os uploads ficam em memória, um arquivo muito grande ocupa a RAM do servidor.
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.

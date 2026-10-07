@@ -5,6 +5,8 @@ import request from 'supertest'
 import router from '../goodbyepdfRouter'
 import { xlsxForJsonController, jsonForXlsxController } from '../../controllers/arquivosController'
 import { CallAPIPython } from '../../services/CallAPIPython'
+import { TAMANHO_MAXIMO_UPLOAD_BYTES } from '../../constants/limites'
+import { ErrorMessagens } from '../../constants/errorMessages'
 
 // os controllers e o cliente do Python são substituídos por mocks:
 // aqui testamos só o que o router faz (Multer e /health)
@@ -54,6 +56,28 @@ describe('goodbyepdfRouter', () => {
             expect(capturado.arquivo?.path).toBeUndefined()
             expect(capturado.arquivo?.destination).toBeUndefined()
             expect(fs.existsSync(PASTA_UPLOAD_ANTIGA)).toBe(false)
+        })
+
+        it('aceita um arquivo exatamente no limite de tamanho', async () => {
+            capturaArquivo(jest.mocked(controller as any))
+
+            await request(app).post(rota).attach('arquivo', Buffer.alloc(TAMANHO_MAXIMO_UPLOAD_BYTES), nomeArquivo).expect(200)
+
+            expect(controller.handleUpload).toHaveBeenCalledTimes(1)
+        })
+
+        it('responde 413 FILE_TOO_LARGE sem chamar o controller quando o arquivo passa do limite', async () => {
+            const resposta = await request(app)
+                .post(rota)
+                .attach('arquivo', Buffer.alloc(TAMANHO_MAXIMO_UPLOAD_BYTES + 1), nomeArquivo)
+                .expect(413)
+
+            expect(resposta.body).toEqual({
+                success: false,
+                mensagem: ErrorMessagens.FILE.FILE_TOO_LARGE(10),
+                code: 'FILE_TOO_LARGE'
+            })
+            expect(controller.handleUpload).not.toHaveBeenCalled()
         })
 
         it('chama o controller sem req.file quando o campo "arquivo" não é enviado', async () => {

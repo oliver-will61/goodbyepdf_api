@@ -47,7 +47,7 @@ O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex
 
 ## Arquitetura (fluxo de uma conversão)
 
-1. `src/router/goodbyepdfRouter.ts`: rotas `POST /xlsx-json` e `POST /json-xlsx`, Multer em `memoryStorage` com campo `arquivo`. Nada é gravado em disco (não há pasta `upload`); o teste do router garante isso.
+1. `src/router/goodbyepdfRouter.ts`: rotas `POST /xlsx-json` e `POST /json-xlsx`, Multer em `memoryStorage` com campo `arquivo`. Nada é gravado em disco (não há pasta `upload`); o teste do router garante isso. Limite de tamanho em `src/constants/limites.ts` (10 MB); o middleware `recebeArquivo` converte o erro do Multer em `413 FILE_TOO_LARGE`. O Multer recebe `limite + 1` porque o busboy acusa o limite ao atingir exatamente o valor.
 2. `src/controllers/arquivosController.ts`: uma instância de `Controller` por conversão, parametrizada com o tipo esperado (`Arquivo.TIPOS`) e o endpoint Python (`src/constants/endpoinsApi.ts`).
 3. `src/models/Controller.ts` → `handleUpload`: cria `Arquivo`, escolhe a validação por `switch` sobre o tipo esperado e mapeia erros para HTTP (`FileValidationError` → 400, `ValidationError` → 404, outros → 500).
 4. `src/models/Arquivo.ts`: valida extensão, `JSON.parse` e a assinatura de 6 bytes do .xlsx. A assinatura é capturada no constructor, depois de `this.arquivo` ser atribuído (não mova para inicializador de campo).

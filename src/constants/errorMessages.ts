@@ -6,7 +6,9 @@ export const ErrorMessagens = {
         INVALID_JSON: "Arquivo JSON inválido. Verifique a formatação do arquivo.",
         INVALID_EXCEL: "Arquivo Excel não compatível ou está corrompido",
         INVALID_OR_CORRUPTED:  'Arquivo inválido ou corrompido',
-        UNSUPPORTED_TYPE: 'Tipo de arquivo não suportado'
+        UNSUPPORTED_TYPE: 'Tipo de arquivo não suportado',
+        FILE_TOO_LARGE: (tamanhoMaximoMB: number) =>
+            `Arquivo muito grande. O tamanho máximo é ${tamanhoMaximoMB} MB.`
     },
     OTHER: "Erro desconhecido"
 }
@@ -17,7 +19,8 @@ export const ErrorCodes = {
     INVALID_JSON: "INVALID_JSON",
     INVALID_EXCEL:"INVALID_EXCEL",
     INVALID_OR_CORRUPTED: "INVALID_OR_CORRUPTED",
-    UNSUPPORTED_TYPE: "UNSUPPORTED_TYPE"
+    UNSUPPORTED_TYPE: "UNSUPPORTED_TYPE",
+    FILE_TOO_LARGE: "FILE_TOO_LARGE"
 
 }
 
