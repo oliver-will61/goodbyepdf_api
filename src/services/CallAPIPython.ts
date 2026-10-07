@@ -56,9 +56,6 @@ export class CallAPIPython {
                 }
             );
 
-            // Limpa o arquivo temporário
-            // fs.unlinkSync(req.file!.path);
-
             console.log("Resposta do Python: ", resposta.data)
 
             //return res.send(resposta.data)
@@ -70,11 +67,6 @@ export class CallAPIPython {
                 data: error.response?.data,
                 message: error.message
             });
-        
-            // // Limpa arquivo temporário em caso de erro
-            // if (req.file && fs.existsSync(req.file.path)) {
-            //     fs.unlinkSync(req.file.path);
-            // }        
 
             const status = error.response?.status
 

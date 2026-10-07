@@ -47,7 +47,7 @@ O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex
 
 ## Arquitetura (fluxo de uma conversão)
 
-1. `src/router/goodbyepdfRouter.ts`: rotas `POST /xlsx-json` e `POST /json-xlsx`, Multer em `memoryStorage` com campo `arquivo`.
+1. `src/router/goodbyepdfRouter.ts`: rotas `POST /xlsx-json` e `POST /json-xlsx`, Multer em `memoryStorage` com campo `arquivo`. Nada é gravado em disco (não há pasta `upload`); o teste do router garante isso.
 2. `src/controllers/arquivosController.ts`: uma instância de `Controller` por conversão, parametrizada com o tipo esperado (`Arquivo.TIPOS`) e o endpoint Python (`src/constants/endpoinsApi.ts`).
 3. `src/models/Controller.ts` → `handleUpload`: cria `Arquivo`, escolhe a validação por `switch` sobre o tipo esperado e mapeia erros para HTTP (`FileValidationError` → 400, `ValidationError` → 404, outros → 500).
 4. `src/models/Arquivo.ts`: valida extensão, `JSON.parse` e a assinatura de 6 bytes do .xlsx. A assinatura é capturada no constructor, depois de `this.arquivo` ser atribuído (não mova para inicializador de campo).
@@ -58,7 +58,7 @@ Mensagens e códigos de erro ficam centralizados em `src/constants/errorMessages
 
 ## Pontos de atenção
 
-- Testes (Jest + ts-jest) em `src/models/__tests__/` e `src/services/__tests__/`; não dependem do Python nem de rede (`CallAPIPython` e `axios` são mockados). `jest.setup.js` silencia o dotenv. Ao mudar validação, erros ou o cliente HTTP, atualize os testes.
+- Testes (Jest + ts-jest) em `src/models/__tests__/`, `src/services/__tests__/` e `src/router/__tests__/` (rotas com `supertest`); não dependem do Python nem de rede (`CallAPIPython` e `axios` são mockados). `jest.setup.js` silencia o dotenv. Ao mudar validação, erros ou o cliente HTTP, atualize os testes.
 - `form-data` é importado em `CallAPIPython.ts` mas não está no `package.json` (vem via axios).
 - O CORS em `src/app.ts` só aceita `https://willian-ribeiro.com`.
 - O frontend (`frontend/public`) é HTML + JS puro (ES modules), servido como estático pelo Express. O único build é o do Tailwind v4: `frontend/src/styles/main.css` → `frontend/public/assets/css/styles.css` (gerado, no `.gitignore`).

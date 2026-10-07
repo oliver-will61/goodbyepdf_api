@@ -16,10 +16,11 @@ const router = express.Router();
 // }))
  
 
-//configuração do multer para tratar arquivos
+//configuração do multer para tratar arquivos.
+//memoryStorage mantém o arquivo só em memória (req.file.buffer): nada é gravado em disco,
+//e o buffer é descartado pelo coletor de lixo ao fim da requisição
 const upload = multer({
-    dest: 'upload', // pasta temporaria para salvar arquivos 
-    storage: multer.memoryStorage() // mantém o arquivo em buffer
+    storage: multer.memoryStorage()
     // limits: {
     //     filesize: 10 * 1024 * 1024
     // }
