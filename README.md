@@ -39,9 +39,32 @@ Fluxo de uma requisição:
 
 1. O usuário envia o arquivo por uma das páginas do frontend (ou direto pela API).
 2. O Express recebe o upload com o **Multer** em memória (`memoryStorage`): o arquivo fica só em `req.file.buffer`, nada é gravado em disco. Arquivos acima de 10 MB são recusados com `413 FILE_TOO_LARGE`.
-3. O `Controller` cria um objeto `Arquivo` e valida extensão e conteúdo (JSON parseável ou assinatura de Excel).
-4. O `CallAPIPython` repassa o arquivo validado para o serviço Python (`CONVERSOR_API_URL` + endpoint).
-5. O Python converte com Pandas e devolve os bytes. O Express repassa a resposta ao cliente, que dispara o download.
+3. O **controller** da feature extrai o arquivo da requisição e chama o **service** correspondente.
+4. O **service** valida extensão e conteúdo (JSON parseável ou assinatura de Excel) e pede a conversão ao `conversorService`, que chama o Python (`CONVERSOR_API_URL` + endpoint).
+5. O Python converte com Pandas e devolve os bytes. O controller responde com o arquivo convertido (`Content-Disposition: attachment`), e o frontend dispara o download.
+6. Qualquer erro, em qualquer camada, é transformado em JSON pelo middleware `trataErros`.
+
+### Camadas do servidor TypeScript
+
+Cada camada tem uma responsabilidade, e cada conversão (feature) tem sua própria rota, controller e service:
+
+| Camada | Responsabilidade | Exemplo (JSON → Excel) |
+|---|---|---|
+| `routes/` | Só define os endpoints e os middlewares de cada um | `jsonXlsx.routes.ts`: `POST /json-xlsx` |
+| `controllers/` | Recebe `req`/`res`, extrai os parâmetros, chama o service e responde | `jsonXlsx.controller.ts` |
+| `services/` | Validações e regras de negócio; não conhece o Express | `jsonXlsx.service.ts` (+ `conversor.service.ts`, cliente do Python) |
+| `middlewares/` | Upload em memória (`upload.ts`) e tratamento central de erros (`trataErros.ts`) | — |
+| `utils/` | Funções auxiliares reutilizáveis (arquivos e HTTP) | `obtemExtensao`, `possuiAssinatura`, `extraiArquivo` |
+| `errors/` | Hierarquia de erros, cada um com seu status HTTP | `FileValidationError`, `ConversorError` |
+
+```
+POST /json-xlsx
+  → routes/jsonXlsx.routes.ts          recebeArquivo (Multer em memória)
+  → controllers/jsonXlsx.controller.ts extraiArquivo(req)
+  → services/jsonXlsx.service.ts       validaArquivoJson → conversorService.converte
+  ← controllers/jsonXlsx.controller.ts enviaArquivo(res, convertido)
+  (erro em qualquer etapa → middlewares/trataErros.ts → { success: false, mensagem, code })
+```
 
 ### Serviço interno
 
@@ -63,23 +86,36 @@ Se surgirem conversões pesadas (PDF, arquivos grandes), o próximo passo é tro
 goodbyepdf_api/
 ├── src/                          # Servidor TypeScript (Express)
 │   ├── index.ts                  # Ponto de entrada: carrega .env e sobe o servidor
-│   ├── app.ts                    # Configura Express, CORS, arquivos estáticos e rotas
-│   ├── router/
-│   │   ├── goodbyepdfRouter.ts   # Rotas de upload (/xlsx-json, /json-xlsx) com Multer
-│   │   └── goodbyepdfPagesRouter.ts  # (desativado) rotas antigas de páginas
-│   ├── controllers/
-│   │   └── arquivosController.ts # Instâncias de Controller para cada conversão
-│   ├── models/
-│   │   ├── Controller.ts         # Fluxo de upload: valida → envia ao Python → trata erros
-│   │   ├── Arquivo.ts            # Validação de extensão, JSON e assinatura do Excel
-│   │   ├── AppError.ts           # Hierarquia de erros (AppError, ValidationError, FileValidationError)
-│   │   └── __tests__/            # Testes de Arquivo, AppError e Controller
-│   ├── services/
-│   │   ├── CallAPIPython.ts      # Cliente HTTP (axios) para o serviço Python
-│   │   └── __tests__/            # Testes do CallAPIPython (axios mockado)
-│   └── constants/
-│       ├── endpoinsApi.ts        # Endpoints do serviço Python
-│       └── errorMessages.ts      # Mensagens e códigos de erro
+│   ├── app.ts                    # Express, CORS, arquivos estáticos, rotas e tratamento de erros
+│   ├── routes/                   # Endpoints (um arquivo por feature)
+│   │   ├── index.ts              # Reúne as rotas de todas as features
+│   │   ├── jsonXlsx.routes.ts    # POST /json-xlsx
+│   │   ├── xlsxJson.routes.ts    # POST /xlsx-json
+│   │   └── health.routes.ts      # GET /health
+│   ├── controllers/              # req/res → service → resposta
+│   │   ├── jsonXlsx.controller.ts
+│   │   ├── xlsxJson.controller.ts
+│   │   └── health.controller.ts
+│   ├── services/                 # Validações e regras de negócio
+│   │   ├── jsonXlsx.service.ts   # Valida .json e converte para .xlsx
+│   │   ├── xlsxJson.service.ts   # Valida .xlsx e converte para .json
+│   │   ├── health.service.ts     # Status da API e do conversor
+│   │   └── conversor.service.ts  # Cliente HTTP (axios) do serviço Python
+│   ├── middlewares/
+│   │   ├── upload.ts             # Multer em memória com limite de 10 MB
+│   │   └── trataErros.ts         # Converte erros em { success: false, mensagem, code }
+│   ├── utils/
+│   │   ├── arquivo.ts            # Extensão, assinatura (magic number), JSON válido
+│   │   └── http.ts               # extraiArquivo(req) e enviaArquivo(res, ...)
+│   ├── errors/AppError.ts        # AppError, FileValidationError, ConversorError
+│   ├── types/arquivos.ts         # ArquivoRecebido e ArquivoConvertido
+│   ├── constants/
+│   │   ├── endpointsConversor.ts # Endpoints do serviço Python
+│   │   ├── errorMessages.ts      # Mensagens e códigos de erro
+│   │   ├── formatos.ts           # Extensões, MIME types e assinatura do .xlsx
+│   │   └── limites.ts            # Tamanho máximo de upload
+│   └── test-utils/fixtures.ts    # Dados de exemplo usados pelos testes
+│   (cada pasta tem um __tests__/ ao lado do código testado)
 │
 ├── python-service/               # Serviço de conversão (FastAPI)
 │   ├── main.py                   # App FastAPI e rotas /api/xlsx-json e /api/json-xlsx
@@ -303,13 +339,13 @@ JSON → Excel: o caminho inverso. Envie uma lista de objetos com as mesmas chav
 
 ## Validação de arquivos e erros
 
-O Express valida o arquivo antes de enviá-lo ao Python (`src/models/Arquivo.ts`):
+O Express valida o arquivo antes de enviá-lo ao Python (`src/services/jsonXlsx.service.ts` e `src/services/xlsxJson.service.ts`):
 
 - **Extensão**: precisa ser `.json` ou `.xlsx`, conforme a rota. A comparação ignora maiúsculas e minúsculas.
 - **JSON**: o conteúdo precisa ser válido para `JSON.parse`.
 - **Excel**: os 6 primeiros bytes precisam bater com a assinatura ZIP/OOXML (`50 4B 03 04 14 00`).
 
-Erros de validação respondem assim:
+Todo erro responde no mesmo formato:
 
 ```json
 {
@@ -319,46 +355,41 @@ Erros de validação respondem assim:
 }
 ```
 
-| Código                 | Status | Quando ocorre                                  |
-|------------------------|--------|------------------------------------------------|
-| `NO_FILE`              | 400    | Nenhum arquivo no campo `arquivo`              |
-| `INVALID_EXTENSION`    | 400    | Extensão diferente da esperada pela rota       |
-| `INVALID_JSON`         | 400    | JSON malformado (ou extensão errada na rota JSON) |
-| `INVALID_EXCEL`        | 400    | Assinatura do arquivo não corresponde a um `.xlsx` (inclusive arquivos com menos de 6 bytes) |
-| `UNSUPPORTED_TYPE`     | 400    | Tipo de arquivo sem validação implementada     |
-| `INVALID_OR_CORRUPTED` | 400    | Erro de validação sem mensagem específica      |
-| `FILE_TOO_LARGE`       | 413    | Arquivo maior que o limite (10 MB, em `src/constants/limites.ts`) |
-| —                      | 422    | Arquivo válido, mas o Pandas não conseguiu converter o conteúdo (ex.: JSON que não é uma lista de objetos) |
-| —                      | 500    | Falha inesperada no serviço Python ou no Express |
-
-Quando o Python recusa o conteúdo (422), a resposta é:
-
-```json
-{ "success": false, "mensagem": "Não foi possível converter o arquivo JSON: ..." }
-```
-
-Em falhas inesperadas (500):
-
-```json
-{ "mensagem": "Erro ao processar arquivo no Python", "erro": "..." }
-```
+| Código                  | Status | Quando ocorre                                  |
+|-------------------------|--------|------------------------------------------------|
+| `NO_FILE`               | 400    | Nenhum arquivo no campo `arquivo`              |
+| `INVALID_EXTENSION`     | 400    | Extensão diferente da esperada pela rota       |
+| `INVALID_JSON`          | 400    | JSON malformado ou vazio                       |
+| `INVALID_EXCEL`         | 400    | Assinatura do arquivo não corresponde a um `.xlsx` (inclusive arquivos com menos de 6 bytes) |
+| `FILE_TOO_LARGE`        | 413    | Arquivo maior que o limite (10 MB, em `src/constants/limites.ts`) |
+| `CONVERSION_FAILED`     | 4xx (o mesmo do Python, ex.: 422) | Arquivo válido, mas o Pandas não conseguiu converter o conteúdo (ex.: JSON que não é uma lista de objetos). A mensagem vem do Python. |
+| `CONVERTER_UNAVAILABLE` | 500    | O serviço Python está fora do ar, demorou demais ou falhou (5xx). O detalhe técnico fica só no log do servidor. |
+| `INTERNAL_ERROR`        | 500    | Erro inesperado no Express. O detalhe fica só no log do servidor. |
 
 ### Hierarquia de erros
 
+Cada erro carrega o próprio status HTTP; o middleware `trataErros` só monta a resposta.
+
 ```
 Error
-└── AppError            (message, code)
-    └── ValidationError       → HTTP 404
-        └── FileValidationError → HTTP 400 (mensagem vem de constants/errorMessages.ts)
+└── AppError (message, code, status)
+    ├── FileValidationError → 400 (ou 413 em FILE_TOO_LARGE); mensagem de constants/errorMessages.ts
+    └── ConversorError      → status 4xx do Python (CONVERSION_FAILED) ou 500 (CONVERTER_UNAVAILABLE)
 ```
+
+Erros que não são `AppError` viram `500 INTERNAL_ERROR`. O erro de tamanho do Multer vira `413 FILE_TOO_LARGE`.
 
 ### Como adicionar uma nova conversão
 
-1. Crie o conversor no Python (`models/` + `controllers/`) e registre a rota em `main.py`.
-2. Adicione o endpoint em `src/constants/endpoinsApi.ts`.
-3. Se o tipo de entrada for novo, adicione-o em `Arquivo.TIPOS`, crie o método de validação e inclua o `case` correspondente em `Controller.handleUpload`.
-4. Instancie o controller em `src/controllers/arquivosController.ts` e registre a rota em `src/router/goodbyepdfRouter.ts`.
-5. Crie a página no frontend (veja [Páginas de conversão](#páginas-de-conversão)).
+Exemplo para uma conversão `csv → json`:
+
+1. **Python:** crie o conversor (`models/` + `controllers/`) e registre a rota em `main.py`.
+2. **Constantes:** adicione o endpoint em `src/constants/endpointsConversor.ts` e, se o formato for novo, em `src/constants/formatos.ts`.
+3. **Service:** crie `src/services/csvJson.service.ts` com a validação (use as funções de `utils/arquivo.ts`) e a chamada `conversorService.converte(...)`, devolvendo um `ArquivoConvertido`.
+4. **Controller:** crie `src/controllers/csvJson.controller.ts` (`extraiArquivo` → service → `enviaArquivo`).
+5. **Rota:** crie `src/routes/csvJson.routes.ts` com `router.post('/csv-json', recebeArquivo, csvJsonController.converte)` e registre em `src/routes/index.ts`.
+6. **Testes:** `services/__tests__/csvJson.service.test.ts` (validação) e `routes/__tests__/csvJson.routes.test.ts` (integração, com o `conversorService` mockado).
+7. **Frontend:** crie a página (veja [Páginas de conversão](#páginas-de-conversão)).
 
 ---
 
@@ -408,27 +439,33 @@ Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste
 npm test
 ```
 
-Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do código testado. Não precisam do serviço Python nem de rede: as dependências externas são substituídas por mocks.
+Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do código testado. Não precisam do serviço Python nem de rede: o `conversorService` (ou o `axios`, no teste dele) é substituído por um mock.
 
-| Arquivo                                          | O que cobre |
-|--------------------------------------------------|-------------|
-| `src/models/__tests__/Arquivo.test.ts`           | Extensão (inclusive maiúsculas e sem extensão), JSON válido/malformado, assinatura do `.xlsx` |
-| `src/models/__tests__/AppError.test.ts`          | Hierarquia de erros e mensagens centralizadas |
-| `src/models/__tests__/Controller.test.ts`        | Fluxo do `handleUpload` e mapeamento de erros para HTTP (400, 404, 500); `CallAPIPython` mockado |
-| `src/services/__tests__/CallAPIPython.test.ts`   | `/health`, envio ao Python, repasse de 4xx com o corpo decodificado e 500; `axios` mockado |
-| `src/router/__tests__/goodbyepdfRouter.test.ts`  | Rotas HTTP com `supertest`: arquivo só em memória (sem gravar em disco), limite de 10 MB (413) e `GET /health` 200/503 |
+| Arquivo | O que cobre |
+|---|---|
+| `src/utils/__tests__/arquivo.test.ts` | Extensão, troca de extensão, assinatura (inclusive arquivo vazio) e JSON válido |
+| `src/utils/__tests__/http.test.ts` | `extraiArquivo` (NO_FILE, arquivo sem buffer) e `enviaArquivo` |
+| `src/errors/__tests__/AppError.test.ts` | Status, código e mensagem de cada erro |
+| `src/middlewares/__tests__/trataErros.test.ts` | Erros da aplicação, 413 do Multer e 500 genérico sem expor detalhes |
+| `src/services/__tests__/jsonXlsx.service.test.ts` | Validação do `.json` e resultado da conversão |
+| `src/services/__tests__/xlsxJson.service.test.ts` | Validação do `.xlsx` e resultado da conversão |
+| `src/services/__tests__/health.service.test.ts` | Status `ok`/`degradado` |
+| `src/services/__tests__/conversor.service.test.ts` | Chamada ao Python, erros 4xx/5xx e conexão recusada (`axios` mockado) |
+| `src/routes/__tests__/jsonXlsx.routes.test.ts` | Integração com `supertest`: download, upload só em memória, erros 400, limite de 10 MB (413), 422 e 500 |
+| `src/routes/__tests__/xlsxJson.routes.test.ts` | Integração com `supertest`: download e erros |
+| `src/routes/__tests__/health.routes.test.ts` | `GET /health` 200/503 |
 
 ```bash
-npx jest src/models/__tests__/Arquivo.test.ts   # um arquivo
-npx jest -t "INVALID_JSON"                      # testes pelo nome
+npx jest src/services/__tests__/jsonXlsx.service.test.ts   # um arquivo
+npx jest -t "INVALID_JSON"                                 # testes pelo nome
 ```
 
-O `jest.setup.js` roda antes de cada arquivo de teste (hoje só silencia o aviso do `dotenv`). Os testes ficam fora do build (`exclude` do `tsconfig.json`).
+Dados de exemplo compartilhados ficam em `src/test-utils/fixtures.ts`. Os testes e as fixtures ficam fora do build (`exclude` do `tsconfig.json`).
 
 ---
 
 ## Pendências conhecidas
 
 - Não há testes do JavaScript do frontend.
-- `CallAPIPython.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
+- `conversor.service.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.

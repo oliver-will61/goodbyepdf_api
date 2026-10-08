@@ -34,7 +34,7 @@ npm run dev:css      # Tailwind em modo watch (rodar em outro terminal)
 npm run build        # tsc → dist/ + CSS minificado do Tailwind
 npm start            # node dist/index.js
 npm test             # Jest + ts-jest
-npx jest src/models/__tests__/Arquivo.test.ts   # um arquivo de teste
+npx jest src/services/__tests__/jsonXlsx.service.test.ts   # um arquivo de teste
 npx jest -t "nome do teste"                     # um teste pelo nome
 
 # Serviço Python
@@ -45,21 +45,26 @@ python run.py        # dev; lê python-service/.env (WORKERS é obrigatório)
 
 O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex.: `http://localhost:5000`, sem barra final); modelo em `.env.example`. O Docker Compose também lê esse `.env` e recusa linhas sem `#` ou com espaço ao redor do `=`. Sem o Python rodando, as rotas de conversão retornam 500 e `GET /health` retorna 503.
 
-## Arquitetura (fluxo de uma conversão)
+## Arquitetura (camadas do servidor TypeScript)
 
-1. `src/router/goodbyepdfRouter.ts`: rotas `POST /xlsx-json` e `POST /json-xlsx`, Multer em `memoryStorage` com campo `arquivo`. Nada é gravado em disco (não há pasta `upload`); o teste do router garante isso. Limite de tamanho em `src/constants/limites.ts` (10 MB); o middleware `recebeArquivo` converte o erro do Multer em `413 FILE_TOO_LARGE`. O Multer recebe `limite + 1` porque o busboy acusa o limite ao atingir exatamente o valor.
-2. `src/controllers/arquivosController.ts`: uma instância de `Controller` por conversão, parametrizada com o tipo esperado (`Arquivo.TIPOS`) e o endpoint Python (`src/constants/endpoinsApi.ts`).
-3. `src/models/Controller.ts` → `handleUpload`: cria `Arquivo`, escolhe a validação por `switch` sobre o tipo esperado e mapeia erros para HTTP (`FileValidationError` → 400, `ValidationError` → 404, outros → 500).
-4. `src/models/Arquivo.ts`: valida extensão, `JSON.parse` e a assinatura de 6 bytes do .xlsx. A assinatura é capturada no constructor, depois de `this.arquivo` ser atribuído (não mova para inicializador de campo).
-5. `src/services/CallAPIPython.ts`: reenvia o buffer via axios (`responseType: 'arraybuffer'`) e devolve os bytes ao cliente. Erros 4xx do Python (ex.: 422 do Pandas) são repassados com o mesmo status; o corpo de erro vem em arraybuffer e é decodificado.
-6. `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz a conversão).
+Cada camada tem uma responsabilidade, e cada conversão (feature) tem seu próprio arquivo em `routes/`, `controllers/` e `services/` (ex.: `jsonXlsx.routes.ts`, `jsonXlsx.controller.ts`, `jsonXlsx.service.ts`):
 
-Mensagens e códigos de erro ficam centralizados em `src/constants/errorMessages.ts`. Para adicionar uma conversão nova, siga a seção "Como adicionar uma nova conversão" do README.
+- `src/routes/`: só define endpoints e middlewares. `routes/index.ts` reúne as rotas de todas as features e é montado em `app.ts`.
+- `src/controllers/`: recebe `req`/`res`, extrai o arquivo (`utils/http.ts` → `extraiArquivo`), chama o service e responde (`enviaArquivo` para o arquivo convertido, JSON no health). Não valida nem tem regra de negócio.
+- `src/services/`: validações e regras de negócio, sem conhecer o Express (recebem `ArquivoRecebido`, devolvem `ArquivoConvertido`, de `types/arquivos.ts`). `conversor.service.ts` é o cliente HTTP do Python: devolve `Buffer` ou lança `ConversorError`; nunca escreve na resposta.
+- `src/middlewares/`: `upload.ts` (Multer em `memoryStorage`, campo `arquivo`, limite de `constants/limites.ts` + 1 byte porque o busboy acusa o limite ao atingir exatamente o valor) e `trataErros.ts` (registrado depois das rotas; converte `AppError` em `{ success: false, mensagem, code }` com o status do erro, o erro de tamanho do Multer em 413 e qualquer outro erro em 500 `INTERNAL_ERROR`, sem expor detalhes).
+- `src/utils/`: funções puras de arquivo (`obtemExtensao`, `trocaExtensao`, `possuiAssinatura`, `ehJsonValido`) e helpers de req/res.
+- `src/errors/AppError.ts`: `AppError(message, code, status)`, `FileValidationError` (400, ou 413 em `FILE_TOO_LARGE`) e `ConversorError` (4xx do Python repassado como `CONVERSION_FAILED`; 5xx/timeout/conexão viram 500 `CONVERTER_UNAVAILABLE`, detalhe só no log).
+- Controllers são `async` e não usam try/catch: o Express 5 repassa rejeições ao `trataErros`.
+- Nada é gravado em disco (não há pasta `upload`); o teste de integração da rota garante isso.
+- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz a conversão).
+
+Mensagens e códigos de erro ficam em `src/constants/errorMessages.ts`; formatos (extensão, MIME, assinatura do .xlsx) em `src/constants/formatos.ts`; endpoints do Python em `src/constants/endpointsConversor.ts`. Para adicionar uma conversão nova, siga a seção "Como adicionar uma nova conversão" do README.
 
 ## Pontos de atenção
 
-- Testes (Jest + ts-jest) em `src/models/__tests__/`, `src/services/__tests__/` e `src/router/__tests__/` (rotas com `supertest`); não dependem do Python nem de rede (`CallAPIPython` e `axios` são mockados). `jest.setup.js` silencia o dotenv. Ao mudar validação, erros ou o cliente HTTP, atualize os testes.
-- `form-data` é importado em `CallAPIPython.ts` mas não está no `package.json` (vem via axios).
+- Testes (Jest + ts-jest) em `__tests__/` ao lado de cada camada. Services e utils têm testes unitários; cada feature tem um teste de integração em `routes/__tests__/` (com `supertest` sobre o `app` real e só o `conversorService` mockado). Fixtures em `src/test-utils/` (fora do build). Não dependem do Python nem de rede.
+- `form-data` é importado em `conversor.service.ts` mas não está no `package.json` (vem via axios).
 - O CORS em `src/app.ts` só aceita `https://willian-ribeiro.com`.
 - O frontend (`frontend/public`) é HTML + JS puro (ES modules), servido como estático pelo Express. O único build é o do Tailwind v4: `frontend/src/styles/main.css` → `frontend/public/assets/css/styles.css` (gerado, no `.gitignore`).
 - Cor primária `#EA1D2C` (escala `primary-*` em `@theme`), fundo branco; modo escuro por classe `dark` no `<html>` (`assets/js/components/tema.js` + script inline no `<head>` de cada página).
