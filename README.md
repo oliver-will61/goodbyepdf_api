@@ -1,11 +1,11 @@
 # GoodbyePDF API
 
-Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
+Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **PDF → Word (.docx)**, **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
 
 A arquitetura separa duas responsabilidades:
 
 - **Servidor TypeScript (Express)**: serve o frontend, recebe os uploads, valida os arquivos e encaminha para o conversor.
-- **Serviço de conversão Python (FastAPI + Pandas)**: faz a conversão propriamente dita e devolve o arquivo convertido.
+- **Serviço de conversão Python (FastAPI + Pandas + pdf2docx)**: faz a conversão propriamente dita e devolve o arquivo convertido.
 
 ---
 
@@ -21,6 +21,7 @@ A arquitetura separa duas responsabilidades:
 - [Frontend](#frontend)
 - [Testes](#testes)
 - [Pendências conhecidas](#pendências-conhecidas)
+- [Licença](#licença)
 
 ---
 
@@ -91,14 +92,17 @@ goodbyepdf_api/
 │   │   ├── index.ts              # Reúne as rotas de todas as features
 │   │   ├── jsonXlsx.routes.ts    # POST /json-xlsx
 │   │   ├── xlsxJson.routes.ts    # POST /xlsx-json
+│   │   ├── pdfDocx.routes.ts     # POST /pdf-docx
 │   │   └── health.routes.ts      # GET /health
 │   ├── controllers/              # req/res → service → resposta
 │   │   ├── jsonXlsx.controller.ts
 │   │   ├── xlsxJson.controller.ts
+│   │   ├── pdfDocx.controller.ts
 │   │   └── health.controller.ts
 │   ├── services/                 # Validações e regras de negócio
 │   │   ├── jsonXlsx.service.ts   # Valida .json e converte para .xlsx
 │   │   ├── xlsxJson.service.ts   # Valida .xlsx e converte para .json
+│   │   ├── pdfDocx.service.ts    # Valida .pdf e converte para .docx (timeout de 120 s)
 │   │   ├── health.service.ts     # Status da API e do conversor
 │   │   └── conversor.service.ts  # Cliente HTTP (axios) do serviço Python
 │   ├── middlewares/
@@ -112,20 +116,22 @@ goodbyepdf_api/
 │   ├── constants/
 │   │   ├── endpointsConversor.ts # Endpoints do serviço Python
 │   │   ├── errorMessages.ts      # Mensagens e códigos de erro
-│   │   ├── formatos.ts           # Extensões, MIME types e assinatura do .xlsx
+│   │   ├── formatos.ts           # Extensões, MIME types e assinaturas (.xlsx, .pdf)
 │   │   └── limites.ts            # Tamanho máximo de upload
 │   └── test-utils/fixtures.ts    # Dados de exemplo usados pelos testes
 │   (cada pasta tem um __tests__/ ao lado do código testado)
 │
 ├── python-service/               # Serviço de conversão (FastAPI)
-│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json e /api/json-xlsx
+│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx e /api/pdf-docx
 │   ├── run.py                    # Execução em desenvolvimento (lê o .env)
 │   ├── controllers/
 │   │   ├── xlsx_json_controller.py
-│   │   └── json_xlsx_controller.py
+│   │   ├── json_xlsx_controller.py
+│   │   └── pdf_docx_controller.py
 │   ├── models/
 │   │   ├── Gerenciador_xlsx.py   # Excel → JSON (pandas.read_excel / to_json)
-│   │   └── Gerenciador_json.py   # JSON → Excel (pandas.read_json / to_excel)
+│   │   ├── Gerenciador_json.py   # JSON → Excel (pandas.read_json / to_excel)
+│   │   └── Gerenciador_pdf.py    # PDF → Word (pdf2docx, tudo em memória)
 │   ├── Dockerfile                # Imagem do conversor
 │   └── requirements.txt
 │
@@ -283,12 +289,13 @@ npm start
 
 ### Servidor TypeScript (público)
 
-Ambos recebem `multipart/form-data` com o arquivo no campo **`arquivo`**.
+As rotas de conversão recebem `multipart/form-data` com o arquivo no campo **`arquivo`** (até 10 MB).
 
 | Método | Rota         | Entrada         | Saída                         |
 |--------|--------------|-----------------|-------------------------------|
 | POST   | `/xlsx-json` | arquivo `.xlsx` | JSON (lista de objetos)       |
 | POST   | `/json-xlsx` | arquivo `.json` | planilha `.xlsx` (binário)    |
+| POST   | `/pdf-docx`  | arquivo `.pdf`  | documento Word `.docx` (binário) |
 | GET    | `/health`    | —               | `200` se o Express e o conversor estão no ar; `503` se o conversor está fora |
 
 Exemplos:
@@ -303,6 +310,11 @@ curl -X POST http://localhost:3000/xlsx-json \
 curl -X POST http://localhost:3000/json-xlsx \
   -F "arquivo=@dados.json" \
   -o resultado.xlsx
+
+# PDF → Word
+curl -X POST http://localhost:3000/pdf-docx \
+  -F "arquivo=@contrato.pdf" \
+  -o contrato.docx
 ```
 
 ### Serviço Python (interno)
@@ -313,6 +325,7 @@ Chamado pelo Express. Usa o mesmo campo `arquivo`.
 |--------|------------------|-------------------------------------------------------------------|
 | POST   | `/api/xlsx-json` | Lê a planilha com Pandas e devolve JSON (`orient="records"`, indentado) |
 | POST   | `/api/json-xlsx` | Lê o JSON com Pandas e devolve um `.xlsx` gerado com `openpyxl`   |
+| POST   | `/api/pdf-docx`  | Converte o PDF com `pdf2docx` (em memória, em uma thread separada) e devolve um `.docx`. PDF corrompido ou protegido por senha → 422 |
 | GET    | `/health`        | Retorna `{"status": "ok"}`                                        |
 
 As respostas incluem o header `Content-Disposition: attachment; filename=<nome original>`.
@@ -334,6 +347,13 @@ Excel → JSON: cada linha da primeira aba vira um objeto, e o cabeçalho define
 ```
 
 JSON → Excel: o caminho inverso. Envie uma lista de objetos com as mesmas chaves.
+
+PDF → Word: a `pdf2docx` analisa o layout de cada página e recria no `.docx` os parágrafos (com fonte, tamanho e cor), as tabelas (como tabelas editáveis) e as imagens. Limitações:
+
+- PDFs escaneados viram imagens no Word: não há OCR, então o texto não fica editável.
+- PDFs protegidos por senha são recusados (422).
+- Layouts elaborados (várias colunas, caixas sobrepostas) podem precisar de ajustes.
+- A conversão é mais pesada que as outras; o Express espera até 120 s pela resposta (`TIMEOUT_PDF_DOCX_MS`).
 
 ---
 
@@ -361,6 +381,7 @@ Todo erro responde no mesmo formato:
 | `INVALID_EXTENSION`     | 400    | Extensão diferente da esperada pela rota       |
 | `INVALID_JSON`          | 400    | JSON malformado ou vazio                       |
 | `INVALID_EXCEL`         | 400    | Assinatura do arquivo não corresponde a um `.xlsx` (inclusive arquivos com menos de 6 bytes) |
+| `INVALID_PDF`           | 400    | O arquivo não começa com o cabeçalho `%PDF-` (não é um PDF) |
 | `FILE_TOO_LARGE`        | 413    | Arquivo maior que o limite (10 MB, em `src/constants/limites.ts`) |
 | `CONVERSION_FAILED`     | 4xx (o mesmo do Python, ex.: 422) | Arquivo válido, mas o Pandas não conseguiu converter o conteúdo (ex.: JSON que não é uma lista de objetos). A mensagem vem do Python. |
 | `CONVERTER_UNAVAILABLE` | 500    | O serviço Python está fora do ar, demorou demais ou falhou (5xx). O detalhe técnico fica só no log do servidor. |
@@ -402,6 +423,7 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 | `/`                           | Página inicial            |
 | `/pages/json-para-xlsx.html`  | Conversão JSON → Excel    |
 | `/pages/xlsx-para-json.html`  | Conversão Excel → JSON    |
+| `/pages/pdf-para-docx.html`   | Conversão PDF → Word      |
 
 ### Estilos (Tailwind)
 
@@ -453,6 +475,8 @@ Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do códig
 | `src/services/__tests__/conversor.service.test.ts` | Chamada ao Python, erros 4xx/5xx e conexão recusada (`axios` mockado) |
 | `src/routes/__tests__/jsonXlsx.routes.test.ts` | Integração com `supertest`: download, upload só em memória, erros 400, limite de 10 MB (413), 422 e 500 |
 | `src/routes/__tests__/xlsxJson.routes.test.ts` | Integração com `supertest`: download e erros |
+| `src/services/__tests__/pdfDocx.service.test.ts` | Validação do `.pdf` (extensão e cabeçalho `%PDF-`), timeout maior e resultado da conversão |
+| `src/routes/__tests__/pdfDocx.routes.test.ts` | Integração com `supertest`: download do `.docx`, erros 400, 413, 422 (PDF protegido) e 500 |
 | `src/routes/__tests__/health.routes.test.ts` | `GET /health` 200/503 |
 
 ```bash
@@ -466,6 +490,19 @@ Dados de exemplo compartilhados ficam em `src/test-utils/fixtures.ts`. Os testes
 
 ## Pendências conhecidas
 
-- Não há testes do JavaScript do frontend.
+- Não há testes do JavaScript do frontend nem do serviço Python (a conversão PDF → Word foi validada manualmente com PDFs reais).
+- A imagem Docker do conversor passou de ~410 MB para ~790 MB com a `pdf2docx` (PyMuPDF e OpenCV).
 - `conversor.service.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.
+
+---
+
+## Licença
+
+Este projeto é distribuído sob a **GNU Affero General Public License v3.0 ou posterior** (AGPL-3.0-or-later). O texto completo está em [`LICENSE`](LICENSE).
+
+A conversão PDF → Word usa a [pdf2docx](https://github.com/ArtifexSoftware/pdf2docx) (MIT), que depende do [PyMuPDF](https://github.com/pymupdf/PyMuPDF), licenciado sob AGPL-3.0. Por isso o projeto inteiro adota a AGPL. Na prática:
+
+- Você pode usar, estudar, modificar e redistribuir o código livremente.
+- Se você disponibilizar uma versão **modificada** como serviço na rede (um site, uma API), precisa oferecer o código-fonte dessa versão aos usuários, sob a mesma licença. O link "Código no GitHub" no rodapé das páginas cumpre esse papel; mantenha-o apontando para o código que está rodando.
+

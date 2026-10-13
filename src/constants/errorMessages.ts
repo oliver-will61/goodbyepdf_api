@@ -7,6 +7,7 @@ export const ErrorCodes = {
     INVALID_EXTENSION: 'INVALID_EXTENSION',
     INVALID_JSON: 'INVALID_JSON',
     INVALID_EXCEL: 'INVALID_EXCEL',
+    INVALID_PDF: 'INVALID_PDF',
     FILE_TOO_LARGE: 'FILE_TOO_LARGE',
     // erros vindos do serviço de conversão
     CONVERSION_FAILED: 'CONVERSION_FAILED',
@@ -25,6 +26,7 @@ export const ErrorMessagens = {
             `Extensão não permitida. Use um arquivo com a extensão: .${extensaoEsperada}`,
         INVALID_JSON: 'Arquivo JSON inválido. Verifique a formatação do arquivo.',
         INVALID_EXCEL: 'Arquivo Excel não compatível ou está corrompido',
+        INVALID_PDF: 'Arquivo PDF inválido ou corrompido',
         FILE_TOO_LARGE: (tamanhoMaximoMB: number) =>
             `Arquivo muito grande. O tamanho máximo é ${tamanhoMaximoMB} MB.`
     },

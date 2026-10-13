@@ -4,16 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-Conversor de arquivos (JSON ↔ Excel .xlsx) em dois serviços:
+Conversor de arquivos (JSON ↔ Excel .xlsx e PDF → Word .docx) em dois serviços:
 - **Express + TypeScript** (`src/`): serve o frontend estático, recebe uploads, valida e repassa para o conversor.
-- **FastAPI + Pandas** (`python-service/`): faz a conversão. É um serviço **interno**, chamado só pelo Express (sem CORS, sem porta publicada no compose).
+- **FastAPI + Pandas + pdf2docx** (`python-service/`): faz a conversão. É um serviço **interno**, chamado só pelo Express (sem CORS, sem porta publicada no compose).
 
 O `README.md` tem a documentação completa (endpoints, códigos de erro, variáveis de ambiente). Código, comentários, mensagens de erro e commits são em português.
 
 ## Regras do projeto
 
 - Todo código deve ser comentado (comentários em português).
-- O projeto é open source: siga boas práticas de código livre.
+- O projeto é open source, sob **AGPL-3.0-or-later** (`LICENSE`), exigida pelo PyMuPDF (dependência da pdf2docx). Novas dependências precisam ter licença compatível com a AGPL. Siga boas práticas de código livre.
 - Mensagens de commit seguem o padrão:
   - nova feature ou mudança: `feat/titulo do commit`
   - correção de erro: `hotfix/titulo do commit`
@@ -57,7 +57,7 @@ Cada camada tem uma responsabilidade, e cada conversão (feature) tem seu própr
 - `src/errors/AppError.ts`: `AppError(message, code, status)`, `FileValidationError` (400, ou 413 em `FILE_TOO_LARGE`) e `ConversorError` (4xx do Python repassado como `CONVERSION_FAILED`; 5xx/timeout/conexão viram 500 `CONVERTER_UNAVAILABLE`, detalhe só no log).
 - Controllers são `async` e não usam try/catch: o Express 5 repassa rejeições ao `trataErros`.
 - Nada é gravado em disco (não há pasta `upload`); o teste de integração da rota garante isso.
-- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz a conversão).
+- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz JSON ↔ Excel; `Gerenciador_pdf.py` usa a pdf2docx com entrada e saída em memória). A conversão de PDF roda em `run_in_threadpool` (é síncrona e pesada) e o Express espera até 120 s por ela (`TIMEOUT_PDF_DOCX_MS` em `pdfDocx.service.ts`, passado ao `conversorService.converte`). PDF corrompido/protegido por senha vira 422 no Python.
 
 Mensagens e códigos de erro ficam em `src/constants/errorMessages.ts`; formatos (extensão, MIME, assinatura do .xlsx) em `src/constants/formatos.ts`; endpoints do Python em `src/constants/endpointsConversor.ts`. Para adicionar uma conversão nova, siga a seção "Como adicionar uma nova conversão" do README.
 

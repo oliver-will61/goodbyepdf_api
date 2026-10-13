@@ -17,6 +17,7 @@ describe('errors/AppError', () => {
             ['NO_FILE', ErrorMessagens.FILE.NO_FILE],
             ['INVALID_JSON', ErrorMessagens.FILE.INVALID_JSON],
             ['INVALID_EXCEL', ErrorMessagens.FILE.INVALID_EXCEL],
+            ['INVALID_PDF', ErrorMessagens.FILE.INVALID_PDF],
         ] as const)('%s → 400 com a mensagem centralizada', (codigo, mensagem) => {
             const erro = new FileValidationError(codigo)
 

@@ -55,6 +55,18 @@ describe('services/conversor.service', () => {
             )
         })
 
+        it('aceita um timeout maior para conversões pesadas', async () => {
+            axiosMock.post.mockResolvedValue({ data: Buffer.from('convertido') })
+
+            await conversorService.converte('/api/pdf-docx', arquivo, 120000)
+
+            expect(axiosMock.post).toHaveBeenCalledWith(
+                `${URL_BASE}/api/pdf-docx`,
+                expect.anything(),
+                expect.objectContaining({ timeout: 120000 })
+            )
+        })
+
         it('lança CONVERSION_FAILED com o status e o "detail" do conversor em erros 4xx', async () => {
             axiosMock.post.mockRejectedValue(erroAxios(422, JSON.stringify({ detail: 'JSON não é uma lista' })))
 
