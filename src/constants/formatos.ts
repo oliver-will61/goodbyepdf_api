@@ -20,5 +20,9 @@ export const FORMATOS = {
     DOCX: {
         extensao: 'docx',
         tipoConteudo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    },
+    PPTX: {
+        extensao: 'pptx',
+        tipoConteudo: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     }
 } as const
