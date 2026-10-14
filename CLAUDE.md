@@ -19,6 +19,7 @@ O `README.md` tem a documentação completa (endpoints, códigos de erro, variá
   - correção de erro: `hotfix/titulo do commit`
 - Sempre que refatorar o código ou adicionar uma feature nova, atualize a documentação (`README.md` e, se for o caso, este `CLAUDE.md`).
 - Toda feature nova deve vir acompanhada de testes (Jest, em uma pasta `__tests__/` ao lado do código). Correções de bug também ganham um teste que reproduz o erro. O `npm test` precisa passar antes do commit.
+- Não é permitido remover (nem desativar com `skip`/`only`, nem afrouxar asserções de) testes para fazer a compilação ou o `npm test` passar: corrija o código ou, se o comportamento mudou de propósito, atualize o teste para refletir o novo comportamento.
 
 ## Comandos
 
