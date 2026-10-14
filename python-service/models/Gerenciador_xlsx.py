@@ -28,9 +28,6 @@ class Gerenciador_xlsx:
             arquivo_json = json_buffer.getvalue()
             json_buffer.close
 
-            # apenas para testes: gera um arquivo 
-            # with open('teste de arquivo', 'w', encoding='utf-8') as f:
-            #       f.write(arquivo_json)
             print(arquivo_json)
 
             return arquivo_json  

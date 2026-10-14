@@ -1,0 +1,24 @@
+// Formatos de arquivo suportados pelas conversões.
+
+export const FORMATOS = {
+    JSON: {
+        extensao: 'json',
+        tipoConteudo: 'application/json; charset=utf-8'
+    },
+    XLSX: {
+        extensao: 'xlsx',
+        tipoConteudo: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        // assinatura dos 6 primeiros bytes de um .xlsx (arquivo ZIP no padrão OOXML)
+        assinatura: Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00])
+    },
+    PDF: {
+        extensao: 'pdf',
+        tipoConteudo: 'application/pdf',
+        // todo PDF começa com o cabeçalho "%PDF-" (seguido da versão, ex.: %PDF-1.7)
+        assinatura: Buffer.from('%PDF-', 'ascii')
+    },
+    DOCX: {
+        extensao: 'docx',
+        tipoConteudo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+} as const

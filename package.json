@@ -15,7 +15,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "axios": "^1.13.1",
     "cors": "^2.8.5",
@@ -32,6 +32,8 @@
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.9.1",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
     "tailwindcss": "^4.3.3",
     "ts-jest": "^29.4.5",
     "ts-node-dev": "^2.0.0",

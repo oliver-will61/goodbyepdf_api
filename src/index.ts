@@ -1,12 +1,13 @@
-import { dot } from 'node:test/reporters'
-import app from './app'
 import dotenv from 'dotenv'
 
+// carrega o .env antes de qualquer outro módulo ler process.env
 dotenv.config()
 
-const PORT = process.env.PORT;
-const HOST = process.env.HOST;
+import app from './app'
+
+const PORT = process.env.PORT
+const HOST = process.env.HOST
 
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em ${HOST}:${PORT}`);
-});
+    console.log(`Servidor rodando em ${HOST}:${PORT}`)
+})
