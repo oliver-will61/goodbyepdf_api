@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-Conversor de arquivos (JSON ↔ Excel .xlsx e PDF → Word .docx) em dois serviços:
+Conversor de arquivos (JSON ↔ Excel .xlsx, PDF → Word .docx e PDF → PowerPoint .pptx) em dois serviços:
 - **Express + TypeScript** (`src/`): serve o frontend estático, recebe uploads, valida e repassa para o conversor.
-- **FastAPI + Pandas + pdf2docx** (`python-service/`): faz a conversão. É um serviço **interno**, chamado só pelo Express (sem CORS, sem porta publicada no compose).
+- **FastAPI + Pandas + pdf2docx + python-pptx** (`python-service/`): faz a conversão. É um serviço **interno**, chamado só pelo Express (sem CORS, sem porta publicada no compose).
 
 O `README.md` tem a documentação completa (endpoints, códigos de erro, variáveis de ambiente). Código, comentários, mensagens de erro e commits são em português.
 
@@ -52,22 +52,23 @@ Cada camada tem uma responsabilidade, e cada conversão (feature) tem seu própr
 
 - `src/routes/`: só define endpoints e middlewares. `routes/index.ts` reúne as rotas de todas as features e é montado em `app.ts`.
 - `src/controllers/`: recebe `req`/`res`, extrai o arquivo (`utils/http.ts` → `extraiArquivo`), chama o service e responde (`enviaArquivo` para o arquivo convertido, JSON no health). Não valida nem tem regra de negócio.
-- `src/services/`: validações e regras de negócio, sem conhecer o Express (recebem `ArquivoRecebido`, devolvem `ArquivoConvertido`, de `types/arquivos.ts`). `conversor.service.ts` é o cliente HTTP do Python: devolve `Buffer` ou lança `ConversorError`; nunca escreve na resposta.
+- `src/validators/`: validação do arquivo recebido, um arquivo por formato (`pdf.validator.ts` → `validaArquivoPdf`, `xlsx.validator.ts`, `json.validator.ts`): confere a extensão e o conteúdo (assinatura ou JSON válido) e lança `FileValidationError`. Fica fora dos services para ser reaproveitada por qualquer feature que receba o formato; um service nunca importa outro service de feature.
+- `src/services/`: regras de negócio de cada conversão (chama o validador do formato, o conversor e monta o resultado), sem conhecer o Express (recebem `ArquivoRecebido`, devolvem `ArquivoConvertido`, de `types/arquivos.ts`). `conversor.service.ts` é o cliente HTTP do Python: devolve `Buffer` ou lança `ConversorError`; nunca escreve na resposta.
 - `src/middlewares/`: `upload.ts` (Multer em `memoryStorage`, campo `arquivo`, limite de `constants/limites.ts` + 1 byte porque o busboy acusa o limite ao atingir exatamente o valor) e `trataErros.ts` (registrado depois das rotas; converte `AppError` em `{ success: false, mensagem, code }` com o status do erro, o erro de tamanho do Multer em 413 e qualquer outro erro em 500 `INTERNAL_ERROR`, sem expor detalhes).
 - `src/utils/`: funções puras de arquivo (`obtemExtensao`, `trocaExtensao`, `possuiAssinatura`, `ehJsonValido`) e helpers de req/res.
 - `src/errors/AppError.ts`: `AppError(message, code, status)`, `FileValidationError` (400, ou 413 em `FILE_TOO_LARGE`) e `ConversorError` (4xx do Python repassado como `CONVERSION_FAILED`; 5xx/timeout/conexão viram 500 `CONVERTER_UNAVAILABLE`, detalhe só no log).
 - Controllers são `async` e não usam try/catch: o Express 5 repassa rejeições ao `trataErros`.
 - Nada é gravado em disco (não há pasta `upload`); o teste de integração da rota garante isso.
-- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz JSON ↔ Excel; `Gerenciador_pdf.py` usa a pdf2docx com entrada e saída em memória). A conversão de PDF roda em `run_in_threadpool` (é síncrona e pesada) e o Express espera até 120 s por ela (`TIMEOUT_PDF_DOCX_MS` em `pdfDocx.service.ts`, passado ao `conversorService.converte`). PDF corrompido/protegido por senha vira 422 no Python.
+- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz JSON ↔ Excel; `Gerenciador_pdf.py` usa a pdf2docx com entrada e saída em memória). A conversão de PDF roda em `run_in_threadpool` (é síncrona e pesada) e o Express espera até 120 s por ela (`TIMEOUT_PDF_DOCX_MS` em `pdfDocx.service.ts`, passado ao `conversorService.converte`). PDF corrompido/protegido por senha vira 422 no Python. PDF → PowerPoint (`pdfPptx.service.ts`, usa o mesmo `validaArquivoPdf` de `validators/pdf.validator.ts`) segue o mesmo esquema (`run_in_threadpool`, `TIMEOUT_PDF_PPTX_MS` de 120 s): `Gerenciador_pdf.convertePptx` renderiza cada página como PNG com PyMuPDF e põe uma por slide com a python-pptx (texto não editável).
 
 Mensagens e códigos de erro ficam em `src/constants/errorMessages.ts`; formatos (extensão, MIME, assinatura do .xlsx) em `src/constants/formatos.ts`; endpoints do Python em `src/constants/endpointsConversor.ts`. Para adicionar uma conversão nova, siga a seção "Como adicionar uma nova conversão" do README.
 
 ## Pontos de atenção
 
-- Testes (Jest + ts-jest) em `__tests__/` ao lado de cada camada. Services e utils têm testes unitários; cada feature tem um teste de integração em `routes/__tests__/` (com `supertest` sobre o `app` real e só o `conversorService` mockado). Fixtures em `src/test-utils/` (fora do build). Não dependem do Python nem de rede.
+- Testes (Jest + ts-jest) em `__tests__/` ao lado de cada camada. Validators, services e utils têm testes unitários; cada feature tem um teste de integração em `routes/__tests__/` (com `supertest` sobre o `app` real e só o `conversorService` mockado). Fixtures em `src/test-utils/` (fora do build). Não dependem do Python nem de rede.
 - `form-data` é importado em `conversor.service.ts` mas não está no `package.json` (vem via axios).
 - O CORS em `src/app.ts` só aceita `https://willian-ribeiro.com`.
 - O frontend (`frontend/public`) é HTML + JS puro (ES modules), servido como estático pelo Express. O único build é o do Tailwind v4: `frontend/src/styles/main.css` → `frontend/public/assets/css/styles.css` (gerado, no `.gitignore`).
 - Cor primária `#EA1D2C` (escala `primary-*` em `@theme`), fundo branco; modo escuro por classe `dark` no `<html>` (`assets/js/components/tema.js` + script inline no `<head>` de cada página).
-- As páginas de conversão compartilham `assets/js/pages/conversor.js`, configurado pelos `data-*` do `<form>`. Cabeçalho e rodapé são repetidos em cada HTML: ao mudar um, mude em todos.
+- As páginas de conversão compartilham `assets/js/pages/conversor.js`, configurado pelos `data-*` do `<form>`. Cabeçalho (com o menu mobile) e rodapé são repetidos em cada HTML: ao mudar um, mude em todos. A navegação do cabeçalho só aparece a partir de `lg` (abaixo disso, menu mobile), porque os links não cabem em `md`.
 - Classes Tailwind precisam aparecer por inteiro no HTML/JS (nada de concatenar nomes de classe).

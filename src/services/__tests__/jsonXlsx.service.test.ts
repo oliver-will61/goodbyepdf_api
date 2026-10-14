@@ -1,4 +1,4 @@
-import { validaArquivoJson, converteJsonParaXlsx } from '../jsonXlsx.service'
+import { converteJsonParaXlsx } from '../jsonXlsx.service'
 import { conversorService } from '../conversor.service'
 import { FileValidationError } from '../../errors/AppError'
 import { FORMATOS } from '../../constants/formatos'
@@ -12,25 +12,6 @@ describe('services/jsonXlsx.service', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-    })
-
-    describe('validaArquivoJson', () => {
-        it('aceita um .json com conteúdo válido (extensão em qualquer caixa)', () => {
-            expect(() => validaArquivoJson(criaArquivoRecebido('DADOS.JSON', conteudoJson()))).not.toThrow()
-        })
-
-        it.each(['dados.txt', 'dados.xlsx', 'semextensao'])('lança INVALID_EXTENSION para "%s"', (nome) => {
-            expect(() => validaArquivoJson(criaArquivoRecebido(nome, conteudoJson())))
-                .toThrow(new FileValidationError('INVALID_EXTENSION', 'json'))
-        })
-
-        it.each([
-            ['malformado', '{ nome: "Ana"'],
-            ['vazio', ''],
-        ])('lança INVALID_JSON para conteúdo %s', (_descricao, texto) => {
-            expect(() => validaArquivoJson(criaArquivoRecebido('dados.json', Buffer.from(texto))))
-                .toThrow(new FileValidationError('INVALID_JSON'))
-        })
     })
 
     describe('converteJsonParaXlsx', () => {

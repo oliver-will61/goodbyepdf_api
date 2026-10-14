@@ -1,11 +1,11 @@
 # GoodbyePDF API
 
-Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **PDF → Word (.docx)**, **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
+Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **PDF → Word (.docx)**, **PDF → PowerPoint (.pptx)**, **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
 
 A arquitetura separa duas responsabilidades:
 
 - **Servidor TypeScript (Express)**: serve o frontend, recebe os uploads, valida os arquivos e encaminha para o conversor.
-- **Serviço de conversão Python (FastAPI + Pandas + pdf2docx)**: faz a conversão propriamente dita e devolve o arquivo convertido.
+- **Serviço de conversão Python (FastAPI + Pandas + pdf2docx + python-pptx)**: faz a conversão propriamente dita e devolve o arquivo convertido.
 
 ---
 
@@ -53,7 +53,8 @@ Cada camada tem uma responsabilidade, e cada conversão (feature) tem sua própr
 |---|---|---|
 | `routes/` | Só define os endpoints e os middlewares de cada um | `jsonXlsx.routes.ts`: `POST /json-xlsx` |
 | `controllers/` | Recebe `req`/`res`, extrai os parâmetros, chama o service e responde | `jsonXlsx.controller.ts` |
-| `services/` | Validações e regras de negócio; não conhece o Express | `jsonXlsx.service.ts` (+ `conversor.service.ts`, cliente do Python) |
+| `validators/` | Validação do arquivo recebido (extensão e conteúdo), um arquivo por formato, reaproveitada por qualquer feature | `json.validator.ts`: `validaArquivoJson` |
+| `services/` | Regras de negócio da conversão (chama o validador e o conversor); não conhece o Express | `jsonXlsx.service.ts` (+ `conversor.service.ts`, cliente do Python) |
 | `middlewares/` | Upload em memória (`upload.ts`) e tratamento central de erros (`trataErros.ts`) | — |
 | `utils/` | Funções auxiliares reutilizáveis (arquivos e HTTP) | `obtemExtensao`, `possuiAssinatura`, `extraiArquivo` |
 | `errors/` | Hierarquia de erros, cada um com seu status HTTP | `FileValidationError`, `ConversorError` |
@@ -62,7 +63,7 @@ Cada camada tem uma responsabilidade, e cada conversão (feature) tem sua própr
 POST /json-xlsx
   → routes/jsonXlsx.routes.ts          recebeArquivo (Multer em memória)
   → controllers/jsonXlsx.controller.ts extraiArquivo(req)
-  → services/jsonXlsx.service.ts       validaArquivoJson → conversorService.converte
+  → services/jsonXlsx.service.ts       validaArquivoJson (validators/json.validator.ts) → conversorService.converte
   ← controllers/jsonXlsx.controller.ts enviaArquivo(res, convertido)
   (erro em qualquer etapa → middlewares/trataErros.ts → { success: false, mensagem, code })
 ```
@@ -93,16 +94,23 @@ goodbyepdf_api/
 │   │   ├── jsonXlsx.routes.ts    # POST /json-xlsx
 │   │   ├── xlsxJson.routes.ts    # POST /xlsx-json
 │   │   ├── pdfDocx.routes.ts     # POST /pdf-docx
+│   │   ├── pdfPptx.routes.ts     # POST /pdf-pptx
 │   │   └── health.routes.ts      # GET /health
 │   ├── controllers/              # req/res → service → resposta
 │   │   ├── jsonXlsx.controller.ts
 │   │   ├── xlsxJson.controller.ts
 │   │   ├── pdfDocx.controller.ts
+│   │   ├── pdfPptx.controller.ts
 │   │   └── health.controller.ts
-│   ├── services/                 # Validações e regras de negócio
-│   │   ├── jsonXlsx.service.ts   # Valida .json e converte para .xlsx
-│   │   ├── xlsxJson.service.ts   # Valida .xlsx e converte para .json
-│   │   ├── pdfDocx.service.ts    # Valida .pdf e converte para .docx (timeout de 120 s)
+│   ├── validators/               # Validação do arquivo recebido, um por formato (reaproveitada pelas features)
+│   │   ├── pdf.validator.ts      # .pdf + cabeçalho %PDF-
+│   │   ├── xlsx.validator.ts     # .xlsx + assinatura OOXML
+│   │   └── json.validator.ts     # .json + conteúdo JSON válido
+│   ├── services/                 # Regras de negócio de cada conversão
+│   │   ├── jsonXlsx.service.ts   # Converte .json para .xlsx
+│   │   ├── xlsxJson.service.ts   # Converte .xlsx para .json
+│   │   ├── pdfDocx.service.ts    # Converte .pdf para .docx (timeout de 120 s)
+│   │   ├── pdfPptx.service.ts    # Converte .pdf para .pptx (timeout de 120 s)
 │   │   ├── health.service.ts     # Status da API e do conversor
 │   │   └── conversor.service.ts  # Cliente HTTP (axios) do serviço Python
 │   ├── middlewares/
@@ -122,16 +130,17 @@ goodbyepdf_api/
 │   (cada pasta tem um __tests__/ ao lado do código testado)
 │
 ├── python-service/               # Serviço de conversão (FastAPI)
-│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx e /api/pdf-docx
+│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx, /api/pdf-docx e /api/pdf-pptx
 │   ├── run.py                    # Execução em desenvolvimento (lê o .env)
 │   ├── controllers/
 │   │   ├── xlsx_json_controller.py
 │   │   ├── json_xlsx_controller.py
-│   │   └── pdf_docx_controller.py
+│   │   ├── pdf_docx_controller.py
+│   │   └── pdf_pptx_controller.py
 │   ├── models/
 │   │   ├── Gerenciador_xlsx.py   # Excel → JSON (pandas.read_excel / to_json)
 │   │   ├── Gerenciador_json.py   # JSON → Excel (pandas.read_json / to_excel)
-│   │   └── Gerenciador_pdf.py    # PDF → Word (pdf2docx, tudo em memória)
+│   │   └── Gerenciador_pdf.py    # PDF → Word (pdf2docx) e PDF → PowerPoint (PyMuPDF + python-pptx), tudo em memória
 │   ├── Dockerfile                # Imagem do conversor
 │   └── requirements.txt
 │
@@ -141,7 +150,9 @@ goodbyepdf_api/
 │       ├── index.html            # Página inicial (/)
 │       ├── pages/
 │       │   ├── json-para-xlsx.html   # Conversão JSON → Excel
-│       │   └── xlsx-para-json.html   # Conversão Excel → JSON
+│       │   ├── xlsx-para-json.html   # Conversão Excel → JSON
+│       │   ├── pdf-para-docx.html    # Conversão PDF → Word
+│       │   └── pdf-para-pptx.html    # Conversão PDF → PowerPoint
 │       └── assets/
 │           ├── css/styles.css    # CSS gerado pelo Tailwind (não versionado)
 │           ├── img/favicon.svg
@@ -296,6 +307,7 @@ As rotas de conversão recebem `multipart/form-data` com o arquivo no campo **`a
 | POST   | `/xlsx-json` | arquivo `.xlsx` | JSON (lista de objetos)       |
 | POST   | `/json-xlsx` | arquivo `.json` | planilha `.xlsx` (binário)    |
 | POST   | `/pdf-docx`  | arquivo `.pdf`  | documento Word `.docx` (binário) |
+| POST   | `/pdf-pptx`  | arquivo `.pdf`  | apresentação PowerPoint `.pptx` (binário) |
 | GET    | `/health`    | —               | `200` se o Express e o conversor estão no ar; `503` se o conversor está fora |
 
 Exemplos:
@@ -315,6 +327,11 @@ curl -X POST http://localhost:3000/json-xlsx \
 curl -X POST http://localhost:3000/pdf-docx \
   -F "arquivo=@contrato.pdf" \
   -o contrato.docx
+
+# PDF → PowerPoint
+curl -X POST http://localhost:3000/pdf-pptx \
+  -F "arquivo=@slides.pdf" \
+  -o slides.pptx
 ```
 
 ### Serviço Python (interno)
@@ -326,6 +343,7 @@ Chamado pelo Express. Usa o mesmo campo `arquivo`.
 | POST   | `/api/xlsx-json` | Lê a planilha com Pandas e devolve JSON (`orient="records"`, indentado) |
 | POST   | `/api/json-xlsx` | Lê o JSON com Pandas e devolve um `.xlsx` gerado com `openpyxl`   |
 | POST   | `/api/pdf-docx`  | Converte o PDF com `pdf2docx` (em memória, em uma thread separada) e devolve um `.docx`. PDF corrompido ou protegido por senha → 422 |
+| POST   | `/api/pdf-pptx`  | Renderiza cada página do PDF como imagem (PyMuPDF, 150 dpi) e monta um `.pptx` com um slide por página (`python-pptx`), em memória e em uma thread separada. PDF corrompido, protegido por senha ou sem páginas → 422 |
 | GET    | `/health`        | Retorna `{"status": "ok"}`                                        |
 
 As respostas incluem o header `Content-Disposition: attachment; filename=<nome original>`.
@@ -354,6 +372,12 @@ PDF → Word: a `pdf2docx` analisa o layout de cada página e recria no `.docx` 
 - PDFs protegidos por senha são recusados (422).
 - Layouts elaborados (várias colunas, caixas sobrepostas) podem precisar de ajustes.
 - A conversão é mais pesada que as outras; o Express espera até 120 s pela resposta (`TIMEOUT_PDF_DOCX_MS`).
+
+PDF → PowerPoint: cada página do PDF é renderizada como imagem PNG (150 dpi) e colocada em um slide próprio, na mesma ordem. O slide tem o tamanho da primeira página (retrato ou paisagem); páginas de outro tamanho são ajustadas ao slide mantendo a proporção. Limitações:
+
+- O texto não fica editável no PowerPoint: cada slide é uma imagem da página.
+- PDFs protegidos por senha são recusados (422).
+- PDFs com muitas páginas geram apresentações maiores; o Express espera até 120 s pela resposta (`TIMEOUT_PDF_PPTX_MS`).
 
 ---
 
@@ -406,11 +430,12 @@ Exemplo para uma conversão `csv → json`:
 
 1. **Python:** crie o conversor (`models/` + `controllers/`) e registre a rota em `main.py`.
 2. **Constantes:** adicione o endpoint em `src/constants/endpointsConversor.ts` e, se o formato for novo, em `src/constants/formatos.ts`.
-3. **Service:** crie `src/services/csvJson.service.ts` com a validação (use as funções de `utils/arquivo.ts`) e a chamada `conversorService.converte(...)`, devolvendo um `ArquivoConvertido`.
-4. **Controller:** crie `src/controllers/csvJson.controller.ts` (`extraiArquivo` → service → `enviaArquivo`).
-5. **Rota:** crie `src/routes/csvJson.routes.ts` com `router.post('/csv-json', recebeArquivo, csvJsonController.converte)` e registre em `src/routes/index.ts`.
-6. **Testes:** `services/__tests__/csvJson.service.test.ts` (validação) e `routes/__tests__/csvJson.routes.test.ts` (integração, com o `conversorService` mockado).
-7. **Frontend:** crie a página (veja [Páginas de conversão](#páginas-de-conversão)).
+3. **Validator:** se o formato de entrada ainda não tem validação, crie `src/validators/csv.validator.ts` (`validaArquivoCsv`, usando as funções de `utils/arquivo.ts`). Se já existe (ex.: `validaArquivoPdf`), reaproveite; nunca importe a validação do service de outra feature.
+4. **Service:** crie `src/services/csvJson.service.ts`, que chama o validador e `conversorService.converte(...)`, devolvendo um `ArquivoConvertido`.
+5. **Controller:** crie `src/controllers/csvJson.controller.ts` (`extraiArquivo` → service → `enviaArquivo`).
+6. **Rota:** crie `src/routes/csvJson.routes.ts` com `router.post('/csv-json', recebeArquivo, csvJsonController.converte)` e registre em `src/routes/index.ts`.
+7. **Testes:** `validators/__tests__/csv.validator.test.ts` (validação), `services/__tests__/csvJson.service.test.ts` (conversão) e `routes/__tests__/csvJson.routes.test.ts` (integração, com o `conversorService` mockado).
+8. **Frontend:** crie a página (veja [Páginas de conversão](#páginas-de-conversão)).
 
 ---
 
@@ -424,6 +449,7 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 | `/pages/json-para-xlsx.html`  | Conversão JSON → Excel    |
 | `/pages/xlsx-para-json.html`  | Conversão Excel → JSON    |
 | `/pages/pdf-para-docx.html`   | Conversão PDF → Word      |
+| `/pages/pdf-para-pptx.html`   | Conversão PDF → PowerPoint |
 
 ### Estilos (Tailwind)
 
@@ -441,7 +467,7 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 
 ### Páginas de conversão
 
-As duas páginas usam o mesmo script, `assets/js/pages/conversor.js`. A conversão é configurada no próprio `<form>`:
+Todas as páginas de conversão usam o mesmo script, `assets/js/pages/conversor.js`. A conversão é configurada no próprio `<form>`:
 
 ```html
 <form data-conversor data-endpoint="/json-xlsx" data-extensao="json" data-extensao-saida="xlsx">
@@ -449,7 +475,7 @@ As duas páginas usam o mesmo script, `assets/js/pages/conversor.js`. A convers�
 
 O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`assets/js/models/Arquivo.js`), envia o arquivo para o endpoint e dispara o download com `assets/js/utils/geraDownload.js`. O arquivo convertido mantém o nome original, com a nova extensão. Erros da API (campo `mensagem`) aparecem na própria página.
 
-Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates).
+Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates).
 
 > O CORS do Express aceita apenas a origem `https://willian-ribeiro.com`. Para consumir a API a partir de outra origem, ajuste `src/app.ts`.
 
@@ -469,14 +495,20 @@ Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do códig
 | `src/utils/__tests__/http.test.ts` | `extraiArquivo` (NO_FILE, arquivo sem buffer) e `enviaArquivo` |
 | `src/errors/__tests__/AppError.test.ts` | Status, código e mensagem de cada erro |
 | `src/middlewares/__tests__/trataErros.test.ts` | Erros da aplicação, 413 do Multer e 500 genérico sem expor detalhes |
-| `src/services/__tests__/jsonXlsx.service.test.ts` | Validação do `.json` e resultado da conversão |
-| `src/services/__tests__/xlsxJson.service.test.ts` | Validação do `.xlsx` e resultado da conversão |
+| `src/validators/__tests__/pdf.validator.test.ts` | Validação do `.pdf`: extensão, cabeçalho `%PDF-` e arquivo vazio |
+| `src/validators/__tests__/xlsx.validator.test.ts` | Validação do `.xlsx`: extensão, assinatura e arquivo vazio |
+| `src/validators/__tests__/json.validator.test.ts` | Validação do `.json`: extensão, JSON malformado e vazio |
+| `src/services/__tests__/jsonXlsx.service.test.ts` | Resultado da conversão e conversor não chamado com arquivo inválido |
+| `src/services/__tests__/xlsxJson.service.test.ts` | Resultado da conversão e conversor não chamado com arquivo inválido |
 | `src/services/__tests__/health.service.test.ts` | Status `ok`/`degradado` |
 | `src/services/__tests__/conversor.service.test.ts` | Chamada ao Python, erros 4xx/5xx e conexão recusada (`axios` mockado) |
 | `src/routes/__tests__/jsonXlsx.routes.test.ts` | Integração com `supertest`: download, upload só em memória, erros 400, limite de 10 MB (413), 422 e 500 |
 | `src/routes/__tests__/xlsxJson.routes.test.ts` | Integração com `supertest`: download e erros |
-| `src/services/__tests__/pdfDocx.service.test.ts` | Validação do `.pdf` (extensão e cabeçalho `%PDF-`), timeout maior e resultado da conversão |
+| `src/services/__tests__/pdfDocx.service.test.ts` | Timeout maior, resultado da conversão e conversor não chamado com arquivo inválido |
 | `src/routes/__tests__/pdfDocx.routes.test.ts` | Integração com `supertest`: download do `.docx`, erros 400, 413, 422 (PDF protegido) e 500 |
+| `src/services/__tests__/pdfPptx.service.test.ts` | Extensão, assinatura `%PDF-`, arquivo vazio, timeout maior e resultado da conversão para `.pptx` |
+| `src/routes/__tests__/pdfPptx.routes.test.ts` | Integração com `supertest`: download do `.pptx`, erros 400 (sem arquivo, extensão, assinatura, vazio), limite de 10 MB (aceita exatamente 10 MB, 413 acima), 422 e 500 |
+| `src/controllers/__tests__/pdfPptx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.pptx` |
 | `src/routes/__tests__/health.routes.test.ts` | `GET /health` 200/503 |
 
 ```bash
@@ -490,7 +522,7 @@ Dados de exemplo compartilhados ficam em `src/test-utils/fixtures.ts`. Os testes
 
 ## Pendências conhecidas
 
-- Não há testes do JavaScript do frontend nem do serviço Python (a conversão PDF → Word foi validada manualmente com PDFs reais).
+- Não há testes do JavaScript do frontend nem do serviço Python (as conversões PDF → Word e PDF → PowerPoint foram validadas manualmente com PDFs reais).
 - A imagem Docker do conversor passou de ~410 MB para ~790 MB com a `pdf2docx` (PyMuPDF e OpenCV).
 - `conversor.service.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.
@@ -501,7 +533,7 @@ Dados de exemplo compartilhados ficam em `src/test-utils/fixtures.ts`. Os testes
 
 Este projeto é distribuído sob a **GNU Affero General Public License v3.0 ou posterior** (AGPL-3.0-or-later). O texto completo está em [`LICENSE`](LICENSE).
 
-A conversão PDF → Word usa a [pdf2docx](https://github.com/ArtifexSoftware/pdf2docx) (MIT), que depende do [PyMuPDF](https://github.com/pymupdf/PyMuPDF), licenciado sob AGPL-3.0. Por isso o projeto inteiro adota a AGPL. Na prática:
+A conversão PDF → Word usa a [pdf2docx](https://github.com/ArtifexSoftware/pdf2docx) (MIT), que depende do [PyMuPDF](https://github.com/pymupdf/PyMuPDF), licenciado sob AGPL-3.0. Por isso o projeto inteiro adota a AGPL. A conversão PDF → PowerPoint usa o PyMuPDF e a [python-pptx](https://github.com/scanny/python-pptx) (MIT), que traz a Pillow (MIT-CMU) e a XlsxWriter (BSD-2-Clause), todas compatíveis com a AGPL. Na prática:
 
 - Você pode usar, estudar, modificar e redistribuir o código livremente.
 - Se você disponibilizar uma versão **modificada** como serviço na rede (um site, uma API), precisa oferecer o código-fonte dessa versão aos usuários, sob a mesma licença. O link "Código no GitHub" no rodapé das páginas cumpre esse papel; mantenha-o apontando para o código que está rodando.

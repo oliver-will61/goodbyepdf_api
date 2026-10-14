@@ -1,4 +1,4 @@
-import { validaArquivoXlsx, converteXlsxParaJson } from '../xlsxJson.service'
+import { converteXlsxParaJson } from '../xlsxJson.service'
 import { conversorService } from '../conversor.service'
 import { FileValidationError } from '../../errors/AppError'
 import { FORMATOS } from '../../constants/formatos'
@@ -12,26 +12,6 @@ describe('services/xlsxJson.service', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-    })
-
-    describe('validaArquivoXlsx', () => {
-        it('aceita um .xlsx com a assinatura correta (extensão em qualquer caixa)', () => {
-            expect(() => validaArquivoXlsx(criaArquivoRecebido('PLANILHA.XLSX', conteudoXlsx()))).not.toThrow()
-        })
-
-        it.each(['planilha.xls', 'dados.json', 'semextensao'])('lança INVALID_EXTENSION para "%s"', (nome) => {
-            expect(() => validaArquivoXlsx(criaArquivoRecebido(nome, conteudoXlsx())))
-                .toThrow(new FileValidationError('INVALID_EXTENSION', 'xlsx'))
-        })
-
-        it.each([
-            ['com outra assinatura', Buffer.from('não é excel')],
-            ['vazio', Buffer.alloc(0)],
-            ['só com o início da assinatura', FORMATOS.XLSX.assinatura.subarray(0, 4)],
-        ])('lança INVALID_EXCEL para arquivo %s', (_descricao, conteudo) => {
-            expect(() => validaArquivoXlsx(criaArquivoRecebido('planilha.xlsx', conteudo)))
-                .toThrow(new FileValidationError('INVALID_EXCEL'))
-        })
     })
 
     describe('converteXlsxParaJson', () => {
