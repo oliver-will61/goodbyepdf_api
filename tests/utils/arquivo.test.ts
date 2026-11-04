@@ -1,4 +1,4 @@
-import { obtemExtensao, trocaExtensao, possuiAssinatura, ehJsonValido } from '../arquivo'
+import { obtemExtensao, trocaExtensao, possuiAssinatura, ehJsonValido } from '../../src/utils/arquivo'
 
 describe('utils/arquivo', () => {
 

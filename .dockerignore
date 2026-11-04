@@ -4,3 +4,4 @@ dist
 .git
 postman-testes
 python-service
+tests

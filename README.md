@@ -126,8 +126,10 @@ goodbyepdf_api/
 │   │   ├── errorMessages.ts      # Mensagens e códigos de erro
 │   │   ├── formatos.ts           # Extensões, MIME types e assinaturas (.xlsx, .pdf)
 │   │   └── limites.ts            # Tamanho máximo de upload
-│   └── test-utils/fixtures.ts    # Dados de exemplo usados pelos testes
-│   (cada pasta tem um __tests__/ ao lado do código testado)
+│
+├── tests/                        # Testes Jest (mesmas pastas de src/: routes/, services/, validators/...)
+│   ├── fixtures.ts               # Dados de exemplo usados pelos testes
+│   └── tsconfig.json             # tsconfig do ts-jest (enxerga src/ e tests/)
 │
 ├── python-service/               # Serviço de conversão (FastAPI)
 │   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx, /api/pdf-docx e /api/pdf-pptx
@@ -434,7 +436,7 @@ Exemplo para uma conversão `csv → json`:
 4. **Service:** crie `src/services/csvJson.service.ts`, que chama o validador e `conversorService.converte(...)`, devolvendo um `ArquivoConvertido`.
 5. **Controller:** crie `src/controllers/csvJson.controller.ts` (`extraiArquivo` → service → `enviaArquivo`).
 6. **Rota:** crie `src/routes/csvJson.routes.ts` com `router.post('/csv-json', recebeArquivo, csvJsonController.converte)` e registre em `src/routes/index.ts`.
-7. **Testes:** `validators/__tests__/csv.validator.test.ts` (validação), `services/__tests__/csvJson.service.test.ts` (conversão) e `routes/__tests__/csvJson.routes.test.ts` (integração, com o `conversorService` mockado).
+7. **Testes:** `tests/validators/csv.validator.test.ts` (validação), `tests/services/csvJson.service.test.ts` (conversão) e `tests/routes/csvJson.routes.test.ts` (integração, com o `conversorService` mockado).
 8. **Frontend:** crie a página (veja [Páginas de conversão](#páginas-de-conversão)).
 
 ---
@@ -487,36 +489,36 @@ Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste
 npm test
 ```
 
-Os testes usam Jest com ts-jest e ficam em pastas `__tests__/` ao lado do código testado. Não precisam do serviço Python nem de rede: o `conversorService` (ou o `axios`, no teste dele) é substituído por um mock.
+Os testes usam Jest com ts-jest e ficam na pasta `tests/` (irmã de `src/`), com as mesmas subpastas de `src/` (`tests/services/`, `tests/routes/`...). Não precisam do serviço Python nem de rede: o `conversorService` (ou o `axios`, no teste dele) é substituído por um mock.
 
 | Arquivo | O que cobre |
 |---|---|
-| `src/utils/__tests__/arquivo.test.ts` | Extensão, troca de extensão, assinatura (inclusive arquivo vazio) e JSON válido |
-| `src/utils/__tests__/http.test.ts` | `extraiArquivo` (NO_FILE, arquivo sem buffer) e `enviaArquivo` |
-| `src/errors/__tests__/AppError.test.ts` | Status, código e mensagem de cada erro |
-| `src/middlewares/__tests__/trataErros.test.ts` | Erros da aplicação, 413 do Multer e 500 genérico sem expor detalhes |
-| `src/validators/__tests__/pdf.validator.test.ts` | Validação do `.pdf`: extensão, cabeçalho `%PDF-` e arquivo vazio |
-| `src/validators/__tests__/xlsx.validator.test.ts` | Validação do `.xlsx`: extensão, assinatura e arquivo vazio |
-| `src/validators/__tests__/json.validator.test.ts` | Validação do `.json`: extensão, JSON malformado e vazio |
-| `src/services/__tests__/jsonXlsx.service.test.ts` | Resultado da conversão e conversor não chamado com arquivo inválido |
-| `src/services/__tests__/xlsxJson.service.test.ts` | Resultado da conversão e conversor não chamado com arquivo inválido |
-| `src/services/__tests__/health.service.test.ts` | Status `ok`/`degradado` |
-| `src/services/__tests__/conversor.service.test.ts` | Chamada ao Python, erros 4xx/5xx e conexão recusada (`axios` mockado) |
-| `src/routes/__tests__/jsonXlsx.routes.test.ts` | Integração com `supertest`: download, upload só em memória, erros 400, limite de 10 MB (413), 422 e 500 |
-| `src/routes/__tests__/xlsxJson.routes.test.ts` | Integração com `supertest`: download e erros |
-| `src/services/__tests__/pdfDocx.service.test.ts` | Timeout maior, resultado da conversão e conversor não chamado com arquivo inválido |
-| `src/routes/__tests__/pdfDocx.routes.test.ts` | Integração com `supertest`: download do `.docx`, erros 400, 413, 422 (PDF protegido) e 500 |
-| `src/services/__tests__/pdfPptx.service.test.ts` | Extensão, assinatura `%PDF-`, arquivo vazio, timeout maior e resultado da conversão para `.pptx` |
-| `src/routes/__tests__/pdfPptx.routes.test.ts` | Integração com `supertest`: download do `.pptx`, erros 400 (sem arquivo, extensão, assinatura, vazio), limite de 10 MB (aceita exatamente 10 MB, 413 acima), 422 e 500 |
-| `src/controllers/__tests__/pdfPptx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.pptx` |
-| `src/routes/__tests__/health.routes.test.ts` | `GET /health` 200/503 |
+| `tests/utils/arquivo.test.ts` | Extensão, troca de extensão, assinatura (inclusive arquivo vazio) e JSON válido |
+| `tests/utils/http.test.ts` | `extraiArquivo` (NO_FILE, arquivo sem buffer) e `enviaArquivo` |
+| `tests/errors/AppError.test.ts` | Status, código e mensagem de cada erro |
+| `tests/middlewares/trataErros.test.ts` | Erros da aplicação, 413 do Multer e 500 genérico sem expor detalhes |
+| `tests/validators/pdf.validator.test.ts` | Validação do `.pdf`: extensão, cabeçalho `%PDF-` e arquivo vazio |
+| `tests/validators/xlsx.validator.test.ts` | Validação do `.xlsx`: extensão, assinatura e arquivo vazio |
+| `tests/validators/json.validator.test.ts` | Validação do `.json`: extensão, JSON malformado e vazio |
+| `tests/services/jsonXlsx.service.test.ts` | Resultado da conversão e conversor não chamado com arquivo inválido |
+| `tests/services/xlsxJson.service.test.ts` | Resultado da conversão e conversor não chamado com arquivo inválido |
+| `tests/services/health.service.test.ts` | Status `ok`/`degradado` |
+| `tests/services/conversor.service.test.ts` | Chamada ao Python, erros 4xx/5xx e conexão recusada (`axios` mockado) |
+| `tests/routes/jsonXlsx.routes.test.ts` | Integração com `supertest`: download, upload só em memória, erros 400, limite de 10 MB (413), 422 e 500 |
+| `tests/routes/xlsxJson.routes.test.ts` | Integração com `supertest`: download e erros |
+| `tests/services/pdfDocx.service.test.ts` | Timeout maior, resultado da conversão e conversor não chamado com arquivo inválido |
+| `tests/routes/pdfDocx.routes.test.ts` | Integração com `supertest`: download do `.docx`, erros 400, 413, 422 (PDF protegido) e 500 |
+| `tests/services/pdfPptx.service.test.ts` | Extensão, assinatura `%PDF-`, arquivo vazio, timeout maior e resultado da conversão para `.pptx` |
+| `tests/routes/pdfPptx.routes.test.ts` | Integração com `supertest`: download do `.pptx`, erros 400 (sem arquivo, extensão, assinatura, vazio), limite de 10 MB (aceita exatamente 10 MB, 413 acima), 422 e 500 |
+| `tests/controllers/pdfPptx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.pptx` |
+| `tests/routes/health.routes.test.ts` | `GET /health` 200/503 |
 
 ```bash
-npx jest src/services/__tests__/jsonXlsx.service.test.ts   # um arquivo
+npx jest tests/services/jsonXlsx.service.test.ts   # um arquivo
 npx jest -t "INVALID_JSON"                                 # testes pelo nome
 ```
 
-Dados de exemplo compartilhados ficam em `src/test-utils/fixtures.ts`. Os testes e as fixtures ficam fora do build (`exclude` do `tsconfig.json`).
+Dados de exemplo compartilhados ficam em `tests/fixtures.ts`. Os testes ficam fora do build (o `tsconfig.json` da raiz só inclui `src/`); o ts-jest usa `tests/tsconfig.json`, que herda o da raiz e enxerga `src/` e `tests/`.
 
 ---
 

@@ -1,15 +1,15 @@
 import { Request, Response } from 'express'
-import { pdfPptxController } from '../pdfPptx.controller'
-import { convertePdfParaPptx } from '../../services/pdfPptx.service'
-import { FileValidationError } from '../../errors/AppError'
-import { conteudoPdf } from '../../test-utils/fixtures'
+import { pdfPptxController } from '../../src/controllers/pdfPptx.controller'
+import { convertePdfParaPptx } from '../../src/services/pdfPptx.service'
+import { FileValidationError } from '../../src/errors/AppError'
+import { conteudoPdf } from '../fixtures'
 
 /*
     Testes unitários do controller PDF → PowerPoint.
     Cobrem o arquivo sem buffer, que não dá para reproduzir com um multipart real
     (o Multer em memoryStorage sempre preenche o buffer).
 */
-jest.mock('../../services/pdfPptx.service')
+jest.mock('../../src/services/pdfPptx.service')
 const serviceMock = jest.mocked(convertePdfParaPptx)
 
 // resposta falsa: registra as chamadas e permite encadear (res.status(...).attachment(...)...)

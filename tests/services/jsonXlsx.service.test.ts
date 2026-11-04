@@ -1,11 +1,11 @@
-import { converteJsonParaXlsx } from '../jsonXlsx.service'
-import { conversorService } from '../conversor.service'
-import { FileValidationError } from '../../errors/AppError'
-import { FORMATOS } from '../../constants/formatos'
-import { criaArquivoRecebido, conteudoJson } from '../../test-utils/fixtures'
+import { converteJsonParaXlsx } from '../../src/services/jsonXlsx.service'
+import { conversorService } from '../../src/services/conversor.service'
+import { FileValidationError } from '../../src/errors/AppError'
+import { FORMATOS } from '../../src/constants/formatos'
+import { criaArquivoRecebido, conteudoJson } from '../fixtures'
 
 // o conversor Python é substituído por um mock: aqui testamos só as regras da feature
-jest.mock('../conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 describe('services/jsonXlsx.service', () => {

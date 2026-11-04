@@ -1,16 +1,16 @@
 import request from 'supertest'
-import app from '../../app'
-import { conversorService } from '../../services/conversor.service'
-import { ConversorError } from '../../errors/AppError'
-import { TAMANHO_MAXIMO_UPLOAD_BYTES } from '../../constants/limites'
-import { FORMATOS } from '../../constants/formatos'
-import { conteudoPdf } from '../../test-utils/fixtures'
+import app from '../../src/app'
+import { conversorService } from '../../src/services/conversor.service'
+import { ConversorError } from '../../src/errors/AppError'
+import { TAMANHO_MAXIMO_UPLOAD_BYTES } from '../../src/constants/limites'
+import { FORMATOS } from '../../src/constants/formatos'
+import { conteudoPdf } from '../fixtures'
 
 /*
     Testes de integração da feature PDF → Word: a requisição passa por todas as
     camadas reais. Só o conversor Python é substituído por um mock.
 */
-jest.mock('../../services/conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 // o supertest só junta o corpo de tipos conhecidos (JSON, texto); para o .docx

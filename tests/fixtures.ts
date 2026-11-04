@@ -1,9 +1,9 @@
-import { ArquivoRecebido } from '../types/arquivos'
-import { FORMATOS } from '../constants/formatos'
+import { ArquivoRecebido } from '../src/types/arquivos'
+import { FORMATOS } from '../src/constants/formatos'
 
 /*
     Dados de exemplo compartilhados pelos testes.
-    (Pasta fora de __tests__ para não ser tratada como arquivo de teste pelo Jest.)
+    (Não termina em .test.ts, então o Jest não a trata como arquivo de teste.)
 */
 
 // conteúdo de um .xlsx válido o suficiente para passar na checagem de assinatura

@@ -1,15 +1,15 @@
 import request from 'supertest'
-import app from '../../app'
-import { conversorService } from '../../services/conversor.service'
-import { ConversorError } from '../../errors/AppError'
-import { FORMATOS } from '../../constants/formatos'
-import { conteudoXlsx } from '../../test-utils/fixtures'
+import app from '../../src/app'
+import { conversorService } from '../../src/services/conversor.service'
+import { ConversorError } from '../../src/errors/AppError'
+import { FORMATOS } from '../../src/constants/formatos'
+import { conteudoXlsx } from '../fixtures'
 
 /*
     Testes de integração da feature Excel → JSON: a requisição passa por todas as
     camadas reais. Só o conversor Python é substituído por um mock.
 */
-jest.mock('../../services/conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 describe('POST /xlsx-json', () => {
