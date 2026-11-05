@@ -1,11 +1,11 @@
 # GoodbyePDF API
 
-Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **PDF → Word (.docx)**, **PDF → PowerPoint (.pptx)**, **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
+Projeto open source, em desenvolvimento, que propõe uma alternativa ao iLovePDF: uma aplicação web e uma API para conversão de arquivos entre formatos. Hoje o projeto converte **PDF → Word (.docx)**, **PDF → PowerPoint (.pptx)**, **Excel (.xlsx) → PDF**, **JSON → Excel (.xlsx)** e **Excel (.xlsx) → JSON**.
 
 A arquitetura separa duas responsabilidades:
 
 - **Servidor TypeScript (Express)**: serve o frontend, recebe os uploads, valida os arquivos e encaminha para o conversor.
-- **Serviço de conversão Python (FastAPI + Pandas + pdf2docx + python-pptx)**: faz a conversão propriamente dita e devolve o arquivo convertido.
+- **Serviço de conversão Python (FastAPI + Pandas + pdf2docx + python-pptx + LibreOffice)**: faz a conversão propriamente dita e devolve o arquivo convertido.
 
 ---
 
@@ -95,12 +95,14 @@ goodbyepdf_api/
 │   │   ├── xlsxJson.routes.ts    # POST /xlsx-json
 │   │   ├── pdfDocx.routes.ts     # POST /pdf-docx
 │   │   ├── pdfPptx.routes.ts     # POST /pdf-pptx
+│   │   ├── xlsxPdf.routes.ts     # POST /xlsx-pdf
 │   │   └── health.routes.ts      # GET /health
 │   ├── controllers/              # req/res → service → resposta
 │   │   ├── jsonXlsx.controller.ts
 │   │   ├── xlsxJson.controller.ts
 │   │   ├── pdfDocx.controller.ts
 │   │   ├── pdfPptx.controller.ts
+│   │   ├── xlsxPdf.controller.ts
 │   │   └── health.controller.ts
 │   ├── validators/               # Validação do arquivo recebido, um por formato (reaproveitada pelas features)
 │   │   ├── pdf.validator.ts      # .pdf + cabeçalho %PDF-
@@ -111,6 +113,7 @@ goodbyepdf_api/
 │   │   ├── xlsxJson.service.ts   # Converte .xlsx para .json
 │   │   ├── pdfDocx.service.ts    # Converte .pdf para .docx (timeout de 120 s)
 │   │   ├── pdfPptx.service.ts    # Converte .pdf para .pptx (timeout de 120 s)
+│   │   ├── xlsxPdf.service.ts    # Converte .xlsx para .pdf (timeout de 120 s)
 │   │   ├── health.service.ts     # Status da API e do conversor
 │   │   └── conversor.service.ts  # Cliente HTTP (axios) do serviço Python
 │   ├── middlewares/
@@ -132,18 +135,19 @@ goodbyepdf_api/
 │   └── tsconfig.json             # tsconfig do ts-jest (enxerga src/ e tests/)
 │
 ├── python-service/               # Serviço de conversão (FastAPI)
-│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx, /api/pdf-docx e /api/pdf-pptx
+│   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx, /api/pdf-docx, /api/pdf-pptx e /api/xlsx-pdf
 │   ├── run.py                    # Execução em desenvolvimento (lê o .env)
 │   ├── controllers/
 │   │   ├── xlsx_json_controller.py
 │   │   ├── json_xlsx_controller.py
 │   │   ├── pdf_docx_controller.py
-│   │   └── pdf_pptx_controller.py
+│   │   ├── pdf_pptx_controller.py
+│   │   └── xlsx_pdf_controller.py
 │   ├── models/
-│   │   ├── Gerenciador_xlsx.py   # Excel → JSON (pandas.read_excel / to_json)
+│   │   ├── Gerenciador_xlsx.py   # Excel → JSON (pandas.read_excel / to_json) e Excel → PDF (LibreOffice headless)
 │   │   ├── Gerenciador_json.py   # JSON → Excel (pandas.read_json / to_excel)
 │   │   └── Gerenciador_pdf.py    # PDF → Word (pdf2docx) e PDF → PowerPoint (PyMuPDF + python-pptx), tudo em memória
-│   ├── Dockerfile                # Imagem do conversor
+│   ├── Dockerfile                # Imagem do conversor (instala o LibreOffice Calc sem interface)
 │   └── requirements.txt
 │
 ├── frontend/                     # Frontend (HTML + JS puro + Tailwind CSS)
@@ -154,7 +158,8 @@ goodbyepdf_api/
 │       │   ├── json-para-xlsx.html   # Conversão JSON → Excel
 │       │   ├── xlsx-para-json.html   # Conversão Excel → JSON
 │       │   ├── pdf-para-docx.html    # Conversão PDF → Word
-│       │   └── pdf-para-pptx.html    # Conversão PDF → PowerPoint
+│       │   ├── pdf-para-pptx.html    # Conversão PDF → PowerPoint
+│       │   └── xlsx-para-pdf.html    # Conversão Excel → PDF
 │       └── assets/
 │           ├── css/styles.css    # CSS gerado pelo Tailwind (não versionado)
 │           ├── img/favicon.svg
@@ -180,6 +185,7 @@ goodbyepdf_api/
 
 - **Node.js** 20+ e npm
 - **Python** 3.13+ e pip
+- **LibreOffice** (só para rodar o conversor fora do Docker; usado na conversão Excel → PDF). O comando `soffice` precisa estar no `PATH` (ex.: `sudo apt install libreoffice-calc` ou `sudo dnf install libreoffice-calc`). Sem ele, `/xlsx-pdf` responde 500 `CONVERTER_UNAVAILABLE`; as demais conversões funcionam normalmente.
 
 ---
 
@@ -310,6 +316,7 @@ As rotas de conversão recebem `multipart/form-data` com o arquivo no campo **`a
 | POST   | `/json-xlsx` | arquivo `.json` | planilha `.xlsx` (binário)    |
 | POST   | `/pdf-docx`  | arquivo `.pdf`  | documento Word `.docx` (binário) |
 | POST   | `/pdf-pptx`  | arquivo `.pdf`  | apresentação PowerPoint `.pptx` (binário) |
+| POST   | `/xlsx-pdf`  | arquivo `.xlsx` | documento `.pdf` com todas as abas (binário) |
 | GET    | `/health`    | —               | `200` se o Express e o conversor estão no ar; `503` se o conversor está fora |
 
 Exemplos:
@@ -334,6 +341,11 @@ curl -X POST http://localhost:3000/pdf-docx \
 curl -X POST http://localhost:3000/pdf-pptx \
   -F "arquivo=@slides.pdf" \
   -o slides.pptx
+
+# Excel → PDF
+curl -X POST http://localhost:3000/xlsx-pdf \
+  -F "arquivo=@planilha.xlsx" \
+  -o planilha.pdf
 ```
 
 ### Serviço Python (interno)
@@ -346,6 +358,7 @@ Chamado pelo Express. Usa o mesmo campo `arquivo`.
 | POST   | `/api/json-xlsx` | Lê o JSON com Pandas e devolve um `.xlsx` gerado com `openpyxl`   |
 | POST   | `/api/pdf-docx`  | Converte o PDF com `pdf2docx` (em memória, em uma thread separada) e devolve um `.docx`. PDF corrompido ou protegido por senha → 422 |
 | POST   | `/api/pdf-pptx`  | Renderiza cada página do PDF como imagem (PyMuPDF, 150 dpi) e monta um `.pptx` com um slide por página (`python-pptx`), em memória e em uma thread separada. PDF corrompido, protegido por senha ou sem páginas → 422 |
+| POST   | `/api/xlsx-pdf`  | Converte a planilha (todas as abas) em PDF com o LibreOffice headless (`soffice --convert-to pdf`), em uma thread separada. A planilha é gravada em uma pasta temporária, apagada logo após a conversão; cada conversão usa um perfil próprio do LibreOffice, o que permite conversões simultâneas. Planilha corrompida → 422; LibreOffice ausente ou acima de 100 s → 500 |
 | GET    | `/health`        | Retorna `{"status": "ok"}`                                        |
 
 As respostas incluem o header `Content-Disposition: attachment; filename=<nome original>`.
@@ -381,11 +394,18 @@ PDF → PowerPoint: cada página do PDF é renderizada como imagem PNG (150 dpi)
 - PDFs protegidos por senha são recusados (422).
 - PDFs com muitas páginas geram apresentações maiores; o Express espera até 120 s pela resposta (`TIMEOUT_PDF_PPTX_MS`).
 
+Excel → PDF: o LibreOffice Calc abre a planilha e exporta **todas as abas**, na ordem da planilha, cada uma começando em uma página nova. São mantidos formatação (cores, bordas, fontes, células mescladas, larguras de coluna), gráficos, imagens e as configurações de impressão da planilha (área de impressão, orientação, margens, ajuste à página). Limitações:
+
+- Só `.xlsx`: planilhas `.xls`, `.xlsm` e protegidas por senha (que não são ZIP) são recusadas pelo Express (400).
+- Fontes que não estão instaladas no container são substituídas (a imagem traz Liberation e DejaVu, compatíveis em métricas com Arial, Times New Roman e Courier New).
+- O LibreOffice é iniciado a cada conversão (~2 s em planilhas pequenas); o Express espera até 120 s pela resposta (`TIMEOUT_XLSX_PDF_MS`) e o Python interrompe o LibreOffice após 100 s.
+- Diferente das outras conversões, esta grava a planilha em disco por alguns instantes (no container do Python), porque o LibreOffice só trabalha com arquivos. O Express continua sem gravar nada.
+
 ---
 
 ## Validação de arquivos e erros
 
-O Express valida o arquivo antes de enviá-lo ao Python (`src/services/jsonXlsx.service.ts` e `src/services/xlsxJson.service.ts`):
+O Express valida o arquivo antes de enviá-lo ao Python (validadores em `src/validators/`, chamados pelos services de cada feature):
 
 - **Extensão**: precisa ser `.json` ou `.xlsx`, conforme a rota. A comparação ignora maiúsculas e minúsculas.
 - **JSON**: o conteúdo precisa ser válido para `JSON.parse`.
@@ -452,6 +472,7 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 | `/pages/xlsx-para-json.html`  | Conversão Excel → JSON    |
 | `/pages/pdf-para-docx.html`   | Conversão PDF → Word      |
 | `/pages/pdf-para-pptx.html`   | Conversão PDF → PowerPoint |
+| `/pages/xlsx-para-pdf.html`   | Conversão Excel → PDF      |
 
 ### Estilos (Tailwind)
 
@@ -511,6 +532,9 @@ Os testes usam Jest com ts-jest e ficam na pasta `tests/` (irmã de `src/`), com
 | `tests/services/pdfPptx.service.test.ts` | Extensão, assinatura `%PDF-`, arquivo vazio, timeout maior e resultado da conversão para `.pptx` |
 | `tests/routes/pdfPptx.routes.test.ts` | Integração com `supertest`: download do `.pptx`, erros 400 (sem arquivo, extensão, assinatura, vazio), limite de 10 MB (aceita exatamente 10 MB, 413 acima), 422 e 500 |
 | `tests/controllers/pdfPptx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.pptx` |
+| `tests/services/xlsxPdf.service.test.ts` | Extensão (`.xls`/`.xlsm` recusados), assinatura do `.xlsx`, arquivo vazio, timeout de 120 s e resultado da conversão para `.pdf` |
+| `tests/routes/xlsxPdf.routes.test.ts` | Integração com `supertest`: download do `.pdf`, erros 400 (sem arquivo, extensão, assinatura, vazio), limite de 10 MB (aceita exatamente 10 MB, 413 acima), 422 e 500 |
+| `tests/controllers/xlsxPdf.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.pdf` |
 | `tests/routes/health.routes.test.ts` | `GET /health` 200/503 |
 
 ```bash
@@ -524,8 +548,8 @@ Dados de exemplo compartilhados ficam em `tests/fixtures.ts`. Os testes ficam fo
 
 ## Pendências conhecidas
 
-- Não há testes do JavaScript do frontend nem do serviço Python (as conversões PDF → Word e PDF → PowerPoint foram validadas manualmente com PDFs reais).
-- A imagem Docker do conversor passou de ~410 MB para ~790 MB com a `pdf2docx` (PyMuPDF e OpenCV).
+- Não há testes do JavaScript do frontend nem do serviço Python (as conversões PDF → Word, PDF → PowerPoint e Excel → PDF foram validadas manualmente com arquivos reais).
+- A imagem Docker do conversor passou de ~410 MB para ~790 MB com a `pdf2docx` (PyMuPDF e OpenCV) e cresce mais algumas centenas de MB com o LibreOffice (Excel → PDF).
 - `conversor.service.ts` importa `form-data`, que não está declarado no `package.json` (hoje vem como dependência transitiva do axios).
 - Arquivos `__pycache__` estão versionados. Vale adicioná-los ao `.gitignore`.
 
@@ -535,7 +559,7 @@ Dados de exemplo compartilhados ficam em `tests/fixtures.ts`. Os testes ficam fo
 
 Este projeto é distribuído sob a **GNU Affero General Public License v3.0 ou posterior** (AGPL-3.0-or-later). O texto completo está em [`LICENSE`](LICENSE).
 
-A conversão PDF → Word usa a [pdf2docx](https://github.com/ArtifexSoftware/pdf2docx) (MIT), que depende do [PyMuPDF](https://github.com/pymupdf/PyMuPDF), licenciado sob AGPL-3.0. Por isso o projeto inteiro adota a AGPL. A conversão PDF → PowerPoint usa o PyMuPDF e a [python-pptx](https://github.com/scanny/python-pptx) (MIT), que traz a Pillow (MIT-CMU) e a XlsxWriter (BSD-2-Clause), todas compatíveis com a AGPL. Na prática:
+A conversão PDF → Word usa a [pdf2docx](https://github.com/ArtifexSoftware/pdf2docx) (MIT), que depende do [PyMuPDF](https://github.com/pymupdf/PyMuPDF), licenciado sob AGPL-3.0. Por isso o projeto inteiro adota a AGPL. A conversão PDF → PowerPoint usa o PyMuPDF e a [python-pptx](https://github.com/scanny/python-pptx) (MIT), que traz a Pillow (MIT-CMU) e a XlsxWriter (BSD-2-Clause), todas compatíveis com a AGPL. A conversão Excel → PDF usa o [LibreOffice](https://www.libreoffice.org/) (MPL-2.0), executado como um programa separado (linha de comando) dentro do container, sem ser incorporado ao código; a MPL-2.0 também é compatível com a AGPL. Na prática:
 
 - Você pode usar, estudar, modificar e redistribuir o código livremente.
 - Se você disponibilizar uma versão **modificada** como serviço na rede (um site, uma API), precisa oferecer o código-fonte dessa versão aos usuários, sob a mesma licença. O link "Código no GitHub" no rodapé das páginas cumpre esse papel; mantenha-o apontando para o código que está rodando.

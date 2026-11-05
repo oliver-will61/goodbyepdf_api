@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-Conversor de arquivos (JSON ↔ Excel .xlsx, PDF → Word .docx e PDF → PowerPoint .pptx) em dois serviços:
+Conversor de arquivos (JSON ↔ Excel .xlsx, PDF → Word .docx, PDF → PowerPoint .pptx e Excel .xlsx → PDF) em dois serviços:
 - **Express + TypeScript** (`src/`): serve o frontend estático, recebe uploads, valida e repassa para o conversor.
-- **FastAPI + Pandas + pdf2docx + python-pptx** (`python-service/`): faz a conversão. É um serviço **interno**, chamado só pelo Express (sem CORS, sem porta publicada no compose).
+- **FastAPI + Pandas + pdf2docx + python-pptx + LibreOffice headless** (`python-service/`): faz a conversão. É um serviço **interno**, chamado só pelo Express (sem CORS, sem porta publicada no compose).
 
 O `README.md` tem a documentação completa (endpoints, códigos de erro, variáveis de ambiente). Código, comentários, mensagens de erro e commits são em português.
 
@@ -58,8 +58,8 @@ Cada camada tem uma responsabilidade, e cada conversão (feature) tem seu própr
 - `src/utils/`: funções puras de arquivo (`obtemExtensao`, `trocaExtensao`, `possuiAssinatura`, `ehJsonValido`) e helpers de req/res.
 - `src/errors/AppError.ts`: `AppError(message, code, status)`, `FileValidationError` (400, ou 413 em `FILE_TOO_LARGE`) e `ConversorError` (4xx do Python repassado como `CONVERSION_FAILED`; 5xx/timeout/conexão viram 500 `CONVERTER_UNAVAILABLE`, detalhe só no log).
 - Controllers são `async` e não usam try/catch: o Express 5 repassa rejeições ao `trataErros`.
-- Nada é gravado em disco (não há pasta `upload`); o teste de integração da rota garante isso.
-- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz JSON ↔ Excel; `Gerenciador_pdf.py` usa a pdf2docx com entrada e saída em memória). A conversão de PDF roda em `run_in_threadpool` (é síncrona e pesada) e o Express espera até 120 s por ela (`TIMEOUT_PDF_DOCX_MS` em `pdfDocx.service.ts`, passado ao `conversorService.converte`). PDF corrompido/protegido por senha vira 422 no Python. PDF → PowerPoint (`pdfPptx.service.ts`, usa o mesmo `validaArquivoPdf` de `validators/pdf.validator.ts`) segue o mesmo esquema (`run_in_threadpool`, `TIMEOUT_PDF_PPTX_MS` de 120 s): `Gerenciador_pdf.convertePptx` renderiza cada página como PNG com PyMuPDF e põe uma por slide com a python-pptx (texto não editável).
+- O Express não grava nada em disco (não há pasta `upload`); o teste de integração da rota garante isso.
+- `python-service/main.py` → `controllers/` → `models/Gerenciador_*.py` (Pandas faz JSON ↔ Excel; `Gerenciador_pdf.py` usa a pdf2docx com entrada e saída em memória). A conversão de PDF roda em `run_in_threadpool` (é síncrona e pesada) e o Express espera até 120 s por ela (`TIMEOUT_PDF_DOCX_MS` em `pdfDocx.service.ts`, passado ao `conversorService.converte`). PDF corrompido/protegido por senha vira 422 no Python. PDF → PowerPoint (`pdfPptx.service.ts`, usa o mesmo `validaArquivoPdf` de `validators/pdf.validator.ts`) segue o mesmo esquema (`run_in_threadpool`, `TIMEOUT_PDF_PPTX_MS` de 120 s): `Gerenciador_pdf.convertePptx` renderiza cada página como PNG com PyMuPDF e põe uma por slide com a python-pptx (texto não editável). Excel → PDF (`xlsxPdf.service.ts`, reaproveita `validaArquivoXlsx`, `TIMEOUT_XLSX_PDF_MS` de 120 s): `Gerenciador_xlsx.convertePdf` roda `soffice --headless --convert-to pdf` (todas as abas) via `subprocess` em um `TemporaryDirectory` com perfil próprio por conversão (permite concorrência) e timeout de 100 s; é a única conversão que toca o disco (só no container Python). O LibreOffice é instalado no `python-service/Dockerfile`; fora do Docker, `soffice` precisa estar no `PATH`.
 
 Mensagens e códigos de erro ficam em `src/constants/errorMessages.ts`; formatos (extensão, MIME, assinatura do .xlsx) em `src/constants/formatos.ts`; endpoints do Python em `src/constants/endpointsConversor.ts`. Para adicionar uma conversão nova, siga a seção "Como adicionar uma nova conversão" do README.
 
