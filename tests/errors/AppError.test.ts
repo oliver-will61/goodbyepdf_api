@@ -1,5 +1,5 @@
-import { AppError, FileValidationError, ConversorError } from '../AppError'
-import { ErrorMessagens } from '../../constants/errorMessages'
+import { AppError, FileValidationError, ConversorError } from '../../src/errors/AppError'
+import { ErrorMessagens } from '../../src/constants/errorMessages'
 
 describe('errors/AppError', () => {
 

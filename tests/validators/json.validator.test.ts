@@ -1,6 +1,6 @@
-import { validaArquivoJson } from '../json.validator'
-import { FileValidationError } from '../../errors/AppError'
-import { criaArquivoRecebido, conteudoJson } from '../../test-utils/fixtures'
+import { validaArquivoJson } from '../../src/validators/json.validator'
+import { FileValidationError } from '../../src/errors/AppError'
+import { criaArquivoRecebido, conteudoJson } from '../fixtures'
 
 /*
     Testes unitários da validação de arquivos JSON.

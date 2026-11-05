@@ -1,7 +1,7 @@
-import { validaArquivoXlsx } from '../xlsx.validator'
-import { FileValidationError } from '../../errors/AppError'
-import { FORMATOS } from '../../constants/formatos'
-import { criaArquivoRecebido, conteudoXlsx } from '../../test-utils/fixtures'
+import { validaArquivoXlsx } from '../../src/validators/xlsx.validator'
+import { FileValidationError } from '../../src/errors/AppError'
+import { FORMATOS } from '../../src/constants/formatos'
+import { criaArquivoRecebido, conteudoXlsx } from '../fixtures'
 
 /*
     Testes unitários da validação de arquivos Excel (.xlsx).

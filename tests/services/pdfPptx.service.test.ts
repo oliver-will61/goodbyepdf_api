@@ -1,12 +1,12 @@
-import { validaArquivoPdf } from '../../validators/pdf.validator'
-import { convertePdfParaPptx, TIMEOUT_PDF_PPTX_MS } from '../pdfPptx.service'
-import { conversorService } from '../conversor.service'
-import { FileValidationError } from '../../errors/AppError'
-import { FORMATOS } from '../../constants/formatos'
-import { criaArquivoRecebido, conteudoPdf } from '../../test-utils/fixtures'
+import { validaArquivoPdf } from '../../src/validators/pdf.validator'
+import { convertePdfParaPptx, TIMEOUT_PDF_PPTX_MS } from '../../src/services/pdfPptx.service'
+import { conversorService } from '../../src/services/conversor.service'
+import { FileValidationError } from '../../src/errors/AppError'
+import { FORMATOS } from '../../src/constants/formatos'
+import { criaArquivoRecebido, conteudoPdf } from '../fixtures'
 
 // o conversor Python é substituído por um mock: aqui testamos só as regras da feature
-jest.mock('../conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 describe('services/pdfPptx.service', () => {

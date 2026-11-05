@@ -1,6 +1,6 @@
-import { validaArquivoPdf } from '../pdf.validator'
-import { FileValidationError } from '../../errors/AppError'
-import { criaArquivoRecebido, conteudoPdf } from '../../test-utils/fixtures'
+import { validaArquivoPdf } from '../../src/validators/pdf.validator'
+import { FileValidationError } from '../../src/errors/AppError'
+import { criaArquivoRecebido, conteudoPdf } from '../fixtures'
 
 /*
     Testes unitários da validação de arquivos PDF.

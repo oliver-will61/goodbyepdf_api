@@ -18,7 +18,7 @@ O `README.md` tem a documentação completa (endpoints, códigos de erro, variá
   - nova feature ou mudança: `feat/titulo do commit`
   - correção de erro: `hotfix/titulo do commit`
 - Sempre que refatorar o código ou adicionar uma feature nova, atualize a documentação (`README.md` e, se for o caso, este `CLAUDE.md`).
-- Toda feature nova deve vir acompanhada de testes (Jest, em uma pasta `__tests__/` ao lado do código). Correções de bug também ganham um teste que reproduz o erro. O `npm test` precisa passar antes do commit.
+- Toda feature nova deve vir acompanhada de testes (Jest, na pasta `tests/` da raiz, irmã de `src/`, com as mesmas subpastas de `src/`). Correções de bug também ganham um teste que reproduz o erro. O `npm test` precisa passar antes do commit.
 - Não é permitido remover (nem desativar com `skip`/`only`, nem afrouxar asserções de) testes para fazer a compilação ou o `npm test` passar: corrija o código ou, se o comportamento mudou de propósito, atualize o teste para refletir o novo comportamento.
 
 ## Comandos
@@ -35,7 +35,7 @@ npm run dev:css      # Tailwind em modo watch (rodar em outro terminal)
 npm run build        # tsc → dist/ + CSS minificado do Tailwind
 npm start            # node dist/index.js
 npm test             # Jest + ts-jest
-npx jest src/services/__tests__/jsonXlsx.service.test.ts   # um arquivo de teste
+npx jest tests/services/jsonXlsx.service.test.ts   # um arquivo de teste
 npx jest -t "nome do teste"                     # um teste pelo nome
 
 # Serviço Python
@@ -65,7 +65,7 @@ Mensagens e códigos de erro ficam em `src/constants/errorMessages.ts`; formatos
 
 ## Pontos de atenção
 
-- Testes (Jest + ts-jest) em `__tests__/` ao lado de cada camada. Validators, services e utils têm testes unitários; cada feature tem um teste de integração em `routes/__tests__/` (com `supertest` sobre o `app` real e só o `conversorService` mockado). Fixtures em `src/test-utils/` (fora do build). Não dependem do Python nem de rede.
+- Testes (Jest + ts-jest) em `tests/` (irmã de `src/`), espelhando as camadas (`tests/services/`, `tests/routes/`...); importam o código por `../../src/...`. Validators, services e utils têm testes unitários; cada feature tem um teste de integração em `tests/routes/` (com `supertest` sobre o `app` real e só o `conversorService` mockado). Fixtures em `tests/fixtures.ts`. O ts-jest usa `tests/tsconfig.json` (herda o da raiz, com `rootDir` na raiz); o build só inclui `src/`. Não dependem do Python nem de rede.
 - `form-data` é importado em `conversor.service.ts` mas não está no `package.json` (vem via axios).
 - O CORS em `src/app.ts` só aceita `https://willian-ribeiro.com`.
 - O frontend (`frontend/public`) é HTML + JS puro (ES modules), servido como estático pelo Express. O único build é o do Tailwind v4: `frontend/src/styles/main.css` → `frontend/public/assets/css/styles.css` (gerado, no `.gitignore`).

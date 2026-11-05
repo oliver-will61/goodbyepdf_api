@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { conversorService } from '../conversor.service'
-import { ConversorError } from '../../errors/AppError'
-import { criaArquivoRecebido, conteudoJson } from '../../test-utils/fixtures'
+import { conversorService } from '../../src/services/conversor.service'
+import { ConversorError } from '../../src/errors/AppError'
+import { criaArquivoRecebido, conteudoJson } from '../fixtures'
 
 // as chamadas HTTP ao serviço Python são substituídas por mocks
 jest.mock('axios')
