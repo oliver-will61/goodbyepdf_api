@@ -1,7 +1,7 @@
-import { verificaSaude } from '../health.service'
-import { conversorService } from '../conversor.service'
+import { verificaSaude } from '../../src/services/health.service'
+import { conversorService } from '../../src/services/conversor.service'
 
-jest.mock('../conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 describe('services/health.service', () => {

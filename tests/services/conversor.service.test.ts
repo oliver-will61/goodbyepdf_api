@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { conversorService } from '../conversor.service'
-import { ConversorError } from '../../errors/AppError'
-import { criaArquivoRecebido, conteudoJson } from '../../test-utils/fixtures'
+import { conversorService } from '../../src/services/conversor.service'
+import { ConversorError } from '../../src/errors/AppError'
+import { criaArquivoRecebido, conteudoJson } from '../fixtures'
 
 // as chamadas HTTP ao serviço Python são substituídas por mocks
 jest.mock('axios')
@@ -52,6 +52,18 @@ describe('services/conversor.service', () => {
                 `${URL_BASE}/api/json-xlsx`,
                 expect.anything(),
                 expect.objectContaining({ responseType: 'arraybuffer', timeout: 30000 })
+            )
+        })
+
+        it('aceita um timeout maior para conversões pesadas', async () => {
+            axiosMock.post.mockResolvedValue({ data: Buffer.from('convertido') })
+
+            await conversorService.converte('/api/pdf-docx', arquivo, 120000)
+
+            expect(axiosMock.post).toHaveBeenCalledWith(
+                `${URL_BASE}/api/pdf-docx`,
+                expect.anything(),
+                expect.objectContaining({ timeout: 120000 })
             )
         })
 

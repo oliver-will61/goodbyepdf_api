@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import multer from 'multer'
-import { trataErros } from '../trataErros'
-import { FileValidationError, ConversorError } from '../../errors/AppError'
-import { ErrorMessagens } from '../../constants/errorMessages'
+import { trataErros } from '../../src/middlewares/trataErros'
+import { FileValidationError, ConversorError } from '../../src/errors/AppError'
+import { ErrorMessagens } from '../../src/constants/errorMessages'
 
 // res do Express com status() encadeável
 const criaResponse = () => {

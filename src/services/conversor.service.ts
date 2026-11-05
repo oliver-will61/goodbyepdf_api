@@ -10,8 +10,8 @@ import { EndpointsConversor } from '../constants/endpointsConversor'
     Falhas viram ConversorError, que o middleware de erros transforma em resposta.
 */
 
-// tempo máximo de uma conversão e da checagem de saúde, em milissegundos
-const TIMEOUT_CONVERSAO_MS = 30000
+// tempo máximo padrão de uma conversão e da checagem de saúde, em milissegundos
+export const TIMEOUT_CONVERSAO_MS = 30000
 const TIMEOUT_SAUDE_MS = 3000
 
 // URL base lida a cada chamada (e não no carregamento do módulo),
@@ -33,8 +33,9 @@ function extraiDetalheErro(erro: any): string {
 
 export const conversorService = {
 
-    // envia o arquivo para o endpoint de conversão e devolve os bytes convertidos
-    async converte(endpoint: string, arquivo: ArquivoRecebido): Promise<Buffer> {
+    // envia o arquivo para o endpoint de conversão e devolve os bytes convertidos.
+    // timeoutMs permite que conversões mais pesadas (ex.: PDF) esperem mais tempo
+    async converte(endpoint: string, arquivo: ArquivoRecebido, timeoutMs = TIMEOUT_CONVERSAO_MS): Promise<Buffer> {
         const formData = new FormData()
         formData.append('arquivo', arquivo.conteudo, {
             filename: arquivo.nome,
@@ -44,7 +45,7 @@ export const conversorService = {
         try {
             const resposta = await axios.post(`${urlBase()}${endpoint}`, formData, {
                 headers: formData.getHeaders(),
-                timeout: TIMEOUT_CONVERSAO_MS,
+                timeout: timeoutMs,
                 // guarda a resposta em bytes, já que pode ser um arquivo binário (.xlsx)
                 responseType: 'arraybuffer'
             })

@@ -1,36 +1,17 @@
-import { validaArquivoJson, converteJsonParaXlsx } from '../jsonXlsx.service'
-import { conversorService } from '../conversor.service'
-import { FileValidationError } from '../../errors/AppError'
-import { FORMATOS } from '../../constants/formatos'
-import { criaArquivoRecebido, conteudoJson } from '../../test-utils/fixtures'
+import { converteJsonParaXlsx } from '../../src/services/jsonXlsx.service'
+import { conversorService } from '../../src/services/conversor.service'
+import { FileValidationError } from '../../src/errors/AppError'
+import { FORMATOS } from '../../src/constants/formatos'
+import { criaArquivoRecebido, conteudoJson } from '../fixtures'
 
 // o conversor Python é substituído por um mock: aqui testamos só as regras da feature
-jest.mock('../conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 describe('services/jsonXlsx.service', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-    })
-
-    describe('validaArquivoJson', () => {
-        it('aceita um .json com conteúdo válido (extensão em qualquer caixa)', () => {
-            expect(() => validaArquivoJson(criaArquivoRecebido('DADOS.JSON', conteudoJson()))).not.toThrow()
-        })
-
-        it.each(['dados.txt', 'dados.xlsx', 'semextensao'])('lança INVALID_EXTENSION para "%s"', (nome) => {
-            expect(() => validaArquivoJson(criaArquivoRecebido(nome, conteudoJson())))
-                .toThrow(new FileValidationError('INVALID_EXTENSION', 'json'))
-        })
-
-        it.each([
-            ['malformado', '{ nome: "Ana"'],
-            ['vazio', ''],
-        ])('lança INVALID_JSON para conteúdo %s', (_descricao, texto) => {
-            expect(() => validaArquivoJson(criaArquivoRecebido('dados.json', Buffer.from(texto))))
-                .toThrow(new FileValidationError('INVALID_JSON'))
-        })
     })
 
     describe('converteJsonParaXlsx', () => {

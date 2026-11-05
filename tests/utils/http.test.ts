@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
-import { extraiArquivo, enviaArquivo } from '../http'
-import { FileValidationError } from '../../errors/AppError'
+import { extraiArquivo, enviaArquivo } from '../../src/utils/http'
+import { FileValidationError } from '../../src/errors/AppError'
 
 describe('utils/http', () => {
 

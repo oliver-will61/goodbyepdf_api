@@ -21,7 +21,7 @@ export class AppError extends Error {
 }
 
 // códigos de erro que se referem ao arquivo enviado pelo cliente
-export type CodigoErroArquivo = 'NO_FILE' | 'INVALID_EXTENSION' | 'INVALID_JSON' | 'INVALID_EXCEL' | 'FILE_TOO_LARGE'
+export type CodigoErroArquivo = 'NO_FILE' | 'INVALID_EXTENSION' | 'INVALID_JSON' | 'INVALID_EXCEL' | 'INVALID_PDF' | 'FILE_TOO_LARGE'
 
 // erro no arquivo enviado: 400, ou 413 quando passa do tamanho máximo
 export class FileValidationError extends AppError {

@@ -1,9 +1,9 @@
 import request from 'supertest'
-import app from '../../app'
-import { conversorService } from '../../services/conversor.service'
+import app from '../../src/app'
+import { conversorService } from '../../src/services/conversor.service'
 
 // só o conversor Python é substituído por um mock
-jest.mock('../../services/conversor.service')
+jest.mock('../../src/services/conversor.service')
 const conversorMock = jest.mocked(conversorService)
 
 describe('GET /health', () => {
