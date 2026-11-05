@@ -4,6 +4,7 @@ from controllers.json_xlsx_controller import json_xlsx_controller
 from controllers.pdf_docx_controller import pdf_docx_controller
 from controllers.pdf_pptx_controller import pdf_pptx_controller
 from controllers.xlsx_pdf_controller import xlsx_pdf_controller
+from controllers.pdf_xlsx_controller import pdf_xlsx_controller
 
 app = FastAPI()
 
@@ -50,3 +51,10 @@ async def converte_xlsx_pdf(arquivo: UploadFile = File(...)):
     print('arquivo recebido!')
     #chama controller
     return await xlsx_pdf_controller(arquivo)
+
+# pdf -> xlsx
+@app.post("/api/pdf-xlsx")
+async def converte_pdf_xlsx(arquivo: UploadFile = File(...)):
+    print('arquivo recebido!')
+    #chama controller
+    return await pdf_xlsx_controller(arquivo)
