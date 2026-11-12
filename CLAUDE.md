@@ -27,6 +27,7 @@ O `README.md` tem a documentação completa (endpoints, códigos de erro, variá
 # Tudo com Docker (api em :3000, conversor só na rede interna)
 docker compose up --build
 npm run docker:dev   # modo dev com Docker (override docker-compose.dev.yml): bind mounts + hot reload + Tailwind watch
+npm run docker:prod  # produção (override docker-compose.prod.yml): Caddy com HTTPS em 80/443 para DOMINIO do .env, api sem porta publicada, restart e logs rotacionados
 
 # Servidor TypeScript
 npm install
@@ -44,7 +45,7 @@ pip install -r requirements.txt
 python run.py        # dev; lê python-service/.env (WORKERS é obrigatório)
 ```
 
-O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex.: `http://localhost:5000`, sem barra final); modelo em `.env.example`. O Docker Compose também lê esse `.env` e recusa linhas sem `#` ou com espaço ao redor do `=`. Sem o Python rodando, as rotas de conversão retornam 500 e `GET /health` retorna 503.
+O Express precisa de `.env` na raiz com `PORT`, `HOST` e `CONVERSOR_API_URL` (ex.: `http://localhost:5000`, sem barra final); modelo em `.env.example`. O Docker Compose também lê esse `.env` e recusa linhas sem `#` ou com espaço ao redor do `=`. Sem o Python rodando, as rotas de conversão retornam 500 e `GET /health` retorna 503. Em produção, `docker-compose.prod.yml` exige também `DOMINIO` (e aceita `WORKERS_CONVERSOR`, padrão 2) no `.env`; o `Caddyfile` limita o corpo a 11 MB e espera 130 s pelo proxy. O passo a passo do deploy no Lightsail está no README.
 
 ## Arquitetura (camadas do servidor TypeScript)
 

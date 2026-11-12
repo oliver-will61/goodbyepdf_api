@@ -1,0 +1,65 @@
+# Modo de produção com Docker (override do docker-compose.yml), usado no deploy
+# (ex.: AWS Lightsail; passo a passo na seção "Deploy" do README).
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#   (ou: npm run docker:prod)
+#
+# Diferenças em relação ao compose base:
+#   - o Caddy vira a única porta de entrada (80/443), com HTTPS automático
+#     (Let's Encrypt) para o domínio definido em DOMINIO no .env;
+#   - a api deixa de publicar a porta 3000 (só o Caddy fala com ela);
+#   - o conversor roda com menos workers (WORKERS_CONVERSOR, padrão 2),
+#     porque cada worker + LibreOffice consome bastante memória;
+#   - todos os serviços reiniciam sozinhos e têm os logs rotacionados.
+#
+# Requer Docker Compose 2.24+ (por causa do "!reset" em "ports").
+
+# configuração de log reaproveitada por todos os serviços (âncora YAML):
+# no máximo 3 arquivos de 10 MB por container, para não encher o disco
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # proxy reverso público: termina o HTTPS e repassa tudo para a api
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      # HTTP/3 (QUIC) usa UDP
+      - "443:443/udp"
+    environment:
+      # domínio usado no Caddyfile; o compose recusa subir se não estiver no .env
+      DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # certificados e estado do Caddy persistem entre recriações do container
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    logging: *logging
+
+  api:
+    restart: unless-stopped
+    # remove a porta 3000 publicada no compose base: a api fica só na rede interna
+    ports: !reset []
+    environment:
+      # usado só na mensagem de log da inicialização
+      HOST: https://${DOMINIO}
+    logging: *logging
+
+  conversor:
+    restart: unless-stopped
+    # mesmo comando do Dockerfile, mas com o número de workers configurável
+    command: uvicorn main:app --host 0.0.0.0 --port 5000 --workers ${WORKERS_CONVERSOR:-2}
+    logging: *logging
+
+volumes:
+  caddy_data:
+  caddy_config:

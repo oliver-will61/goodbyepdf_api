@@ -16,6 +16,7 @@ A arquitetura separa duas responsabilidades:
 - [Pré-requisitos](#pré-requisitos)
 - [Configuração (.env)](#configuração-env)
 - [Como executar](#como-executar)
+- [Deploy (AWS Lightsail)](#deploy-aws-lightsail)
 - [Endpoints](#endpoints)
 - [Validação de arquivos e erros](#validação-de-arquivos-e-erros)
 - [Frontend](#frontend)
@@ -179,6 +180,9 @@ goodbyepdf_api/
 ├── postman-testes/               # Arquivos de exemplo usados em testes manuais
 ├── Dockerfile                    # Imagem do servidor Express
 ├── docker-compose.yml            # Sobe api (pública) + conversor (interno)
+├── docker-compose.dev.yml        # Override de desenvolvimento (bind mounts + hot reload)
+├── docker-compose.prod.yml       # Override de produção (Caddy com HTTPS, restart, logs)
+├── Caddyfile                     # Proxy reverso de produção (HTTPS automático)
 ├── package.json
 ├── tsconfig.json
 └── jest.config.js
@@ -213,6 +217,8 @@ cp .env.example .env
 | `HOST`              | Host exibido no log de inicialização               | `http://localhost`      |
 | `PORT`              | Porta do servidor Express                          | `3000`                  |
 | `CONVERSOR_API_URL` | URL base do serviço Python (sem barra no final)    | `http://localhost:5000` |
+| `DOMINIO`           | Domínio público do deploy (só `docker-compose.prod.yml`; obrigatório nele) | `exemplo.com` |
+| `WORKERS_CONVERSOR` | Workers do conversor Python em produção (só `docker-compose.prod.yml`) | `2` |
 
 ### Serviço Python: `./python-service/.env`
 
@@ -306,6 +312,61 @@ npm start
 ```
 
 > O CSS final (`frontend/public/assets/css/styles.css`) é gerado e não fica no repositório. Se as páginas aparecerem sem estilo, rode `npm run build:css`.
+
+---
+
+## Deploy (AWS Lightsail)
+
+Em produção, o override `docker-compose.prod.yml` acrescenta o **Caddy** como única porta de entrada (80/443, com certificado HTTPS do Let's Encrypt emitido e renovado sozinho para o domínio em `DOMINIO`), tira a porta 3000 da api da internet, reduz os workers do conversor (`WORKERS_CONVERSOR`, padrão 2), liga `restart: unless-stopped` e rotaciona os logs (3 × 10 MB por container). O `Caddyfile` limita o corpo da requisição a 11 MB (o limite da aplicação é 10 MB) e espera até 130 s pela resposta (as conversões podem levar até 120 s). Requer Docker Compose 2.24+.
+
+```bash
+npm run docker:prod
+# equivale a:
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+### 1. No console do Lightsail
+
+1. **Criar a instância**: *Linux/Unix* → *OS Only* → **Ubuntu 24.04 LTS**. Plano com **no mínimo 2 GB de RAM** (4 GB se houver várias conversões de PDF/Excel ao mesmo tempo: o LibreOffice e a pdf2docx consomem bastante memória). Região mais próxima dos usuários (ex.: São Paulo).
+2. **IP estático**: *Networking* → *Create static IP* e anexe à instância (sem ele, o IP público muda quando a instância para e volta).
+3. **Firewall da instância** (aba *Networking*, em IPv4 **e** IPv6): libere **HTTP (TCP 80)** e **HTTPS (TCP 443)**; opcionalmente **UDP 443** (HTTP/3). Mantenha o **SSH (22)** restrito ao seu IP. Não abra 3000 nem 5000.
+4. **DNS**: crie um registro `A` do domínio (ou subdomínio) apontando para o IP estático, no seu registrador ou numa *DNS zone* do Lightsail. Espere propagar (`dig +short seu.dominio.com`) antes de subir o Caddy, senão a emissão do certificado falha (ele tenta de novo depois).
+5. **Snapshots automáticos** (aba *Snapshots*): recomendados. Não há banco de dados; o único estado são os certificados no volume `caddy_data`.
+
+### 2. Na instância (via SSH)
+
+```bash
+# swap de 2 GB: evita que o kernel mate o conversor num pico de memória
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# Docker + plugin compose (script oficial); depois saia e entre de novo no SSH
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+
+# código e configuração
+git clone https://github.com/oliver-will61/goodbyepdf_api.git
+cd goodbyepdf_api
+cp .env.example .env
+nano .env   # ajuste DOMINIO=seu.dominio.com (e WORKERS_CONVERSOR, se quiser)
+
+# sobe tudo em segundo plano
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+Confira com `docker compose -f docker-compose.yml -f docker-compose.prod.yml ps` (todos `running`/`healthy`), `curl https://seu.dominio.com/health` e os logs com `docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f caddy`.
+
+### 3. Atualizar
+
+```bash
+cd goodbyepdf_api
+git pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker image prune -f   # remove as imagens antigas
+```
+
+> O CORS de `src/app.ts` só aceita `https://willian-ribeiro.com`, mas isso não afeta o frontend servido pelo próprio Express (mesma origem). Só importa se outro site for chamar a API pelo navegador.
 
 ---
 

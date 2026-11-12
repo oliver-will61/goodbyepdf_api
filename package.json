@@ -11,7 +11,8 @@
     "build": "tsc && npm run build:css",
     "build:css": "tailwindcss -i frontend/src/styles/main.css -o frontend/public/assets/css/styles.css --minify",
     "start": "node dist/index.js",
-    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build"
+    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build"
   },
   "keywords": [],
   "author": "",
