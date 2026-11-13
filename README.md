@@ -16,7 +16,7 @@ A arquitetura separa duas responsabilidades:
 - [Pré-requisitos](#pré-requisitos)
 - [Configuração (.env)](#configuração-env)
 - [Como executar](#como-executar)
-- [Deploy (AWS Lightsail)](#deploy-aws-lightsail)
+- [Deploy (VPS Hostinger)](#deploy-vps-hostinger)
 - [Endpoints](#endpoints)
 - [Validação de arquivos e erros](#validação-de-arquivos-e-erros)
 - [Frontend](#frontend)
@@ -315,7 +315,7 @@ npm start
 
 ---
 
-## Deploy (AWS Lightsail)
+## Deploy (VPS Hostinger)
 
 Em produção, o override `docker-compose.prod.yml` acrescenta o **Caddy** como única porta de entrada (80/443, com certificado HTTPS do Let's Encrypt emitido e renovado sozinho para o domínio em `DOMINIO`), tira a porta 3000 da api da internet, reduz os workers do conversor (`WORKERS_CONVERSOR`, padrão 2), liga `restart: unless-stopped` e rotaciona os logs (3 × 10 MB por container). O `Caddyfile` limita o corpo da requisição a 11 MB (o limite da aplicação é 10 MB) e espera até 130 s pela resposta (as conversões podem levar até 120 s). Requer Docker Compose 2.24+.
 
@@ -325,23 +325,41 @@ npm run docker:prod
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-### 1. No console do Lightsail
+### 1. No painel da Hostinger (hPanel → VPS)
 
-1. **Criar a instância**: *Linux/Unix* → *OS Only* → **Ubuntu 24.04 LTS**. Plano com **no mínimo 2 GB de RAM** (4 GB se houver várias conversões de PDF/Excel ao mesmo tempo: o LibreOffice e a pdf2docx consomem bastante memória). Região mais próxima dos usuários (ex.: São Paulo).
-2. **IP estático**: *Networking* → *Create static IP* e anexe à instância (sem ele, o IP público muda quando a instância para e volta).
-3. **Firewall da instância** (aba *Networking*, em IPv4 **e** IPv6): libere **HTTP (TCP 80)** e **HTTPS (TCP 443)**; opcionalmente **UDP 443** (HTTP/3). Mantenha o **SSH (22)** restrito ao seu IP. Não abra 3000 nem 5000.
-4. **DNS**: crie um registro `A` do domínio (ou subdomínio) apontando para o IP estático, no seu registrador ou numa *DNS zone* do Lightsail. Espere propagar (`dig +short seu.dominio.com`) antes de subir o Caddy, senão a emissão do certificado falha (ele tenta de novo depois).
-5. **Snapshots automáticos** (aba *Snapshots*): recomendados. Não há banco de dados; o único estado são os certificados no volume `caddy_data`.
+1. **Plano**: qualquer KVM com **no mínimo 4 GB de RAM** (o KVM 1 já atende; o KVM 2 dá folga para várias conversões de PDF/Excel ao mesmo tempo, que consomem bastante memória por causa do LibreOffice e da pdf2docx). Escolha o datacenter mais próximo dos usuários.
+2. **Sistema operacional**: *Plain OS* → **Ubuntu 24.04 LTS** (ou o template *Ubuntu 24.04 with Docker*, que já traz o Docker e dispensa a instalação abaixo). Na criação, defina a senha de root e **cadastre sua chave SSH pública**.
+3. **IP**: a VPS já vem com um IPv4 dedicado e fixo (aparece em *Visão geral*); não é preciso reservar IP.
+4. **Firewall** (*Segurança* → *Firewall*): crie uma configuração, ative-a para a VPS e permita **TCP 22** (de preferência só do seu IP), **TCP 80**, **TCP 443** e, opcionalmente, **UDP 443** (HTTP/3). Não abra 3000 nem 5000. Esse firewall fica fora da VPS, então vale também para as portas publicadas pelo Docker (o Docker ignora as regras do `ufw` de dentro da máquina).
+5. **DNS**: crie um registro `A` do domínio (ou subdomínio) apontando para o IP da VPS. Se o domínio estiver na Hostinger, é em *Domínios* → *DNS / Nameservers*; senão, no seu registrador. Espere propagar (`dig +short seu.dominio.com`) antes de subir o Caddy, senão a emissão do certificado falha (ele tenta de novo depois).
+6. **Backups/snapshots** (*Backups e monitoramento*): crie um snapshot depois que tudo estiver no ar. Não há banco de dados; o único estado são os certificados no volume `caddy_data`.
 
-### 2. Na instância (via SSH)
+### 2. Na VPS (via SSH)
+
+A VPS da Hostinger entra como `root`. Crie um usuário próprio para o deploy e desligue o login por senha:
 
 ```bash
+# como root: usuário "deploy" com sudo e a mesma chave SSH do root
+adduser deploy && usermod -aG sudo deploy
+rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy
+# só login por chave e sem root direto (teste o login como deploy antes de fechar a sessão)
+sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/; s/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+systemctl restart ssh
+```
+
+Depois, entrando como `deploy` (`ssh deploy@IP_DA_VPS`):
+
+```bash
+# atualizações do sistema
+sudo apt update && sudo apt upgrade -y
+
 # swap de 2 GB: evita que o kernel mate o conversor num pico de memória
 sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
 sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
-# Docker + plugin compose (script oficial); depois saia e entre de novo no SSH
+# Docker + plugin compose (script oficial; pule se usou o template com Docker);
+# depois saia e entre de novo no SSH
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
 

@@ -1,5 +1,5 @@
 # Modo de produção com Docker (override do docker-compose.yml), usado no deploy
-# (ex.: AWS Lightsail; passo a passo na seção "Deploy" do README).
+# (ex.: VPS da Hostinger; passo a passo na seção "Deploy" do README).
 #
 # Uso:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
