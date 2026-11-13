@@ -1,0 +1,26 @@
+# Configuração do Caddy (proxy reverso de produção, ver docker-compose.prod.yml).
+# O domínio vem da variável DOMINIO do .env. Com um domínio público apontando
+# para o servidor, o Caddy emite e renova o certificado HTTPS (Let's Encrypt)
+# sozinho e redireciona HTTP para HTTPS.
+
+{$DOMINIO} {
+	# comprime as respostas de texto (HTML, CSS, JS, JSON)
+	encode gzip zstd
+
+	# recusa uploads acima de 11 MB antes de chegarem à api
+	# (o limite da aplicação é 10 MB, em src/constants/limites.ts; a folga cobre
+	# o overhead do multipart, e a api continua respondendo o 413 padronizado)
+	request_body {
+		max_size 11MB
+	}
+
+	# repassa tudo para o Express pela rede interna do compose
+	reverse_proxy api:3000 {
+		transport http {
+			# as conversões de PDF/Excel podem levar até 120 s no Express;
+			# a folga evita que o proxy corte a resposta antes dele
+			read_timeout 130s
+			write_timeout 130s
+		}
+	}
+}

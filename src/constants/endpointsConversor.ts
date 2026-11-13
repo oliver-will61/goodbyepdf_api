@@ -5,5 +5,7 @@ export const EndpointsConversor = {
     XLSX_JSON: '/api/xlsx-json',
     PDF_DOCX: '/api/pdf-docx',
     PDF_PPTX: '/api/pdf-pptx',
+    XLSX_PDF: '/api/xlsx-pdf',
+    PDF_XLSX: '/api/pdf-xlsx',
     HEALTH: '/health'
 } as const

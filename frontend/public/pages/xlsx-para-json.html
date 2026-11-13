@@ -39,13 +39,15 @@
                 <span>goodbye<span class="text-primary">PDF</span></span>
             </a>
 
-            <!-- navegação em telas médias e grandes -->
-            <nav aria-label="Principal" class="hidden items-center gap-1 lg:flex">
+            <!-- navegação em telas grandes (a partir de xl; abaixo disso, menu mobile) -->
+            <nav aria-label="Principal" class="hidden items-center gap-1 xl:flex">
                 <a href="/" class="nav-link">Início</a>
                 <a href="/pages/json-para-xlsx.html" class="nav-link">JSON para Excel</a>
                 <a href="/pages/xlsx-para-json.html" class="nav-link" aria-current="page">Excel para JSON</a>
             <a href="/pages/pdf-para-docx.html" class="nav-link">PDF para Word</a>
             <a href="/pages/pdf-para-pptx.html" class="nav-link">PDF para PowerPoint</a>
+            <a href="/pages/xlsx-para-pdf.html" class="nav-link">Excel para PDF</a>
+            <a href="/pages/pdf-para-xlsx.html" class="nav-link">PDF para Excel</a>
             </nav>
 
             <div class="flex items-center gap-1">
@@ -58,20 +60,22 @@
 
                 <!-- botão do menu em telas pequenas -->
                 <button type="button" data-menu-botao aria-controls="menu-mobile" aria-expanded="false" aria-label="Abrir menu"
-                        class="grid size-10 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 lg:hidden">
+                        class="grid size-10 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 xl:hidden">
                     <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
                 </button>
             </div>
         </div>
 
         <!-- menu em telas pequenas (aberto/fechado por assets/js/components/menu.js) -->
-        <nav id="menu-mobile" aria-label="Principal" class="hidden border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 lg:hidden">
+        <nav id="menu-mobile" aria-label="Principal" class="hidden border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 xl:hidden">
             <div class="flex flex-col gap-1">
                 <a href="/" class="nav-link">Início</a>
                 <a href="/pages/json-para-xlsx.html" class="nav-link">JSON para Excel</a>
                 <a href="/pages/xlsx-para-json.html" class="nav-link" aria-current="page">Excel para JSON</a>
             <a href="/pages/pdf-para-docx.html" class="nav-link">PDF para Word</a>
             <a href="/pages/pdf-para-pptx.html" class="nav-link">PDF para PowerPoint</a>
+            <a href="/pages/xlsx-para-pdf.html" class="nav-link">Excel para PDF</a>
+            <a href="/pages/pdf-para-xlsx.html" class="nav-link">PDF para Excel</a>
             </div>
         </nav>
     </header>
