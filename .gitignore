@@ -4,3 +4,6 @@ node_modules
 /postman-testes
 # CSS gerado pelo Tailwind (npm run build:css)
 /frontend/public/assets/css/styles.css
+# cache de bytecode do Python (gerado ao rodar o serviço, não vai para o repositório)
+__pycache__/
+*.pyc
