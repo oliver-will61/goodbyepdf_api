@@ -9,11 +9,12 @@ import { TAMANHO_MAXIMO_UPLOAD_BYTES } from '../constants/limites'
 const upload = multer({
     storage: multer.memoryStorage(),
     // limite de tamanho: como o arquivo fica em memória, evita estourar a RAM do servidor.
-    // O busboy (usado pelo Multer) acusa o limite ao atingir exatamente esse valor,
-    // por isso o +1: um arquivo de exatamente TAMANHO_MAXIMO_UPLOAD_BYTES é aceito.
+    // A partir do Multer 2.5 o próprio Multer compensa o busboy (que acusa o limite
+    // ao atingir exatamente o valor): um arquivo de exatamente TAMANHO_MAXIMO_UPLOAD_BYTES
+    // é aceito e só o que passa disso é recusado. Por isso o package.json exige multer >= 2.5.
     // O erro de tamanho vira 413 no middleware trataErros.
     limits: {
-        fileSize: TAMANHO_MAXIMO_UPLOAD_BYTES + 1
+        fileSize: TAMANHO_MAXIMO_UPLOAD_BYTES
     }
 })
 
