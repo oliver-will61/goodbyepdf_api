@@ -597,7 +597,7 @@ Todas as páginas de conversão usam o mesmo script, `assets/js/pages/conversor.
 
 O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`assets/js/models/Arquivo.js`), envia o arquivo para o endpoint e dispara o download com `assets/js/utils/geraDownload.js`. O arquivo convertido mantém o nome original, com a nova extensão. Erros da API (campo `mensagem`) aparecem na própria página.
 
-Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates).
+Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates). Na página inicial, inclua também o cartão em "Ferramentas" e o atalho no topo. A ordem, na página inicial e no cabeçalho (telas grandes e menu mobile), é: PDF para outro formato (PDF → X), depois outro formato para PDF (X → PDF) e, sempre por último, JSON ↔ Excel. Uma conversão nova entra no fim do seu grupo.
 
 > O CORS do Express aceita apenas a origem `https://willian-ribeiro.com`. Para consumir a API a partir de outra origem, ajuste `src/app.ts`.
 
