@@ -1,4 +1,5 @@
 from fastapi import HTTPException, Response
+from zipfile import BadZipFile
 from models.Gerenciador_xlsx import Gerenciador_xlsx
 
 async def xlsx_json_controller(arquivo):
@@ -29,6 +30,11 @@ async def xlsx_json_controller(arquivo):
             print(resposta)
             return resposta
                     
+        # o pandas não conseguiu ler o conteúdo: erro do arquivo enviado, não do servidor
+        except (ValueError, BadZipFile) as e:
+            print(f"⚠️ Conteúdo não convertível: {str(e)}")
+            raise HTTPException(status_code=422, detail=f"Não foi possível converter o arquivo Excel: {str(e)}")
+
         except Exception as e:
             print(f"❌ Erro no Python: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")

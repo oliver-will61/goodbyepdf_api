@@ -1,0 +1,11 @@
+{
+  // tsconfig usado pelo ts-jest e pelo editor nos testes:
+  // herda as regras da raiz, mas com rootDir na raiz do projeto para incluir src/ e tests/
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true
+  },
+  "include": ["../src", "."],
+  "exclude": []
+}

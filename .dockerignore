@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+.git
+postman-testes
+python-service
+tests

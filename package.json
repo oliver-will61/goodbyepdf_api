@@ -5,13 +5,18 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
+    "predev": "tailwindcss -i frontend/src/styles/main.css -o frontend/public/assets/css/styles.css",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "dev:css": "tailwindcss -i frontend/src/styles/main.css -o frontend/public/assets/css/styles.css --watch",
+    "build": "tsc && npm run build:css",
+    "build:css": "tailwindcss -i frontend/src/styles/main.css -o frontend/public/assets/css/styles.css --minify",
+    "start": "node dist/index.js",
+    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "axios": "^1.13.1",
     "cors": "^2.8.5",
@@ -22,11 +27,15 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.4",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.9.1",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
+    "tailwindcss": "^4.3.3",
     "ts-jest": "^29.4.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"

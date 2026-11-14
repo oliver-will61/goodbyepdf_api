@@ -1,0 +1,53 @@
+# Modo de desenvolvimento com Docker (override do docker-compose.yml).
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#   (ou: npm run docker:dev)
+#
+# O código entra nos containers por bind mount, então as mudanças aparecem
+# sem rebuild: o Express reinicia sozinho (ts-node-dev), o Tailwind recompila
+# o CSS (serviço "css") e o conversor recarrega (uvicorn --reload).
+# As dependências continuam dentro das imagens; mudanças no package.json ou no
+# requirements.txt exigem subir de novo com --build.
+#
+# ":z" nos volumes ajusta o rótulo do SELinux (Fedora, RHEL...) para o container
+# conseguir ler as pastas montadas; em sistemas sem SELinux ele é ignorado.
+
+services:
+  api:
+    build:
+      context: .
+      # reaproveita a etapa "build" do Dockerfile, que tem as devDependencies
+      target: build
+    # ts-node-dev com hot reload; o predev gera o CSS legível (sem minificar)
+    command: npm run dev
+    # usuário "node" (UID 1000) da imagem: arquivos criados nas pastas montadas
+    # não ficam com dono root na máquina de quem desenvolve
+    user: node
+    volumes:
+      - ./src:/app/src:z
+      - ./frontend:/app/frontend:z
+
+  # recompila o CSS do Tailwind a cada mudança em HTML, JS ou main.css
+  css:
+    build:
+      context: .
+      target: build
+    # "--watch=always" mantém o watch mesmo sem terminal (stdin fechado no container)
+    command: npx tailwindcss -i frontend/src/styles/main.css -o frontend/public/assets/css/styles.css --watch=always
+    user: node
+    volumes:
+      - ./frontend:/app/frontend:z
+
+  conversor:
+    # um worker com reload automático ao salvar arquivos .py
+    command: uvicorn main:app --host 0.0.0.0 --port 5000 --reload
+    environment:
+      # não cria __pycache__ (com dono root) dentro da pasta montada
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./python-service:/app:z
+      # volumes anônimos por cima do venv e do cache local: o container usa as
+      # dependências da imagem e o reload não fica varrendo milhares de arquivos
+      - /app/myvenv
+      - /app/__pycache__
