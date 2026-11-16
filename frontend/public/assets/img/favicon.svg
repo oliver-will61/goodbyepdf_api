@@ -1,7 +1,12 @@
-<!-- ícone do site: documento branco sobre quadrado vermelho da marca (#EA1D2C) -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#EA1D2C"/>
-  <g transform="translate(4 4)" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
+<!-- ícone do site: mão branca dando tchau sobre quadrado vermelho da marca (#EA1D2C) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <rect width="96" height="96" rx="21" fill="#EA1D2C"/>
+  <g transform="translate(2 -3) rotate(-15 51 56)" fill="#FFFFFF" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M31 50 L72 50 L72 58 C71.33 64.67 68.67 70 64 74 C60 77.33 55.83 79 51.5 79 C47.17 79 43 77.33 39 74 C37.86 73.15 36.92 72.15 35.95 71.26 C21.34 57.83 31 63.24 31 58 Z" stroke="none"/>
+    <path d="M35 54 V24 M46 54 V17 M57 54 V20 M68 54 V30" fill="none" stroke-width="8"/>
+    <path d="M43.23 71.82 L21 52" fill="none" stroke-width="8.5"/>
+  </g>
+  <g transform="translate(2 -3)" fill="none" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round">
+    <path d="M70 22 Q78 24 80 31"/>
   </g>
 </svg>
