@@ -77,8 +77,44 @@
     @apply rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:text-primary dark:text-zinc-300 dark:hover:text-primary-400;
   }
 
-  .nav-link[aria-current="page"] {
+  /* aria-current="page" marca a página atual; .nav-link-ativo marca o grupo do cabeçalho que contém a página atual */
+  .nav-link[aria-current="page"],
+  .nav-link-ativo {
     @apply text-primary dark:text-primary-400;
+  }
+
+  /* link dentro do submenu suspenso do cabeçalho (telas grandes), com o ícone à esquerda do texto */
+  .nav-sublink {
+    @apply flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm font-medium whitespace-nowrap text-zinc-600 transition hover:bg-zinc-100 hover:text-primary focus-visible:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-primary-400 dark:focus-visible:bg-zinc-800;
+  }
+
+  .nav-sublink[aria-current="page"] {
+    @apply text-primary dark:text-primary-400;
+  }
+
+  /* ícone de formato nas opções do cabeçalho (submenus e menu mobile); as classes de cor abaixo também valem para os cartões da página inicial */
+  .icone-formato {
+    @apply grid size-8 shrink-0 place-items-center rounded-lg;
+  }
+
+  /* uma cor por tipo de arquivo, nos mesmos tons do vermelho da marca (fundo 50 + ícone 600; no escuro, fundo 950 + ícone 400).
+     O ícone é sempre o do formato que não é PDF: o de saída em "Converter de PDF" e "Outras conversões", o enviado em "Converter em PDF" */
+
+  .icone-word {
+    @apply bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400;
+  }
+
+  .icone-excel {
+    @apply bg-green-50 text-green-600 dark:bg-green-950/60 dark:text-green-400;
+  }
+
+  /* PowerPoint usa o próprio vermelho da marca */
+  .icone-powerpoint {
+    @apply bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400;
+  }
+
+  .icone-json {
+    @apply bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400;
   }
 
   /* cartão com borda suave, usado na home e nas páginas de conversão */
