@@ -172,7 +172,8 @@ goodbyepdf_api/
 │           └── js/
 │               ├── components/
 │               │   ├── tema.js   # Alterna modo claro/escuro e salva a escolha
-│               │   └── menu.js   # Menu de navegação em telas pequenas
+│               │   ├── menu.js   # Menu de navegação em telas pequenas
+│               │   └── submenu.js # Submenus suspensos do cabeçalho (clique, teclado, Esc)
 │               ├── models/Arquivo.js     # Validação de extensão no cliente e envio do arquivo
 │               ├── pages/conversor.js    # Lógica das páginas de conversão (upload, arrastar e soltar, download)
 │               └── utils/geraDownload.js # Converte a resposta em blob e dispara o download
@@ -578,7 +579,7 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 - A entrada é `frontend/src/styles/main.css`. O Tailwind lê as classes usadas nos HTML e JS de `frontend/public` e gera `frontend/public/assets/css/styles.css`.
 - Scripts: `npm run build:css` (minificado), `npm run dev:css` (modo watch). O `npm run build` já gera o CSS minificado e o `npm run dev` gera o CSS legível (sem minificar); no Docker, ele é gerado na etapa de build da imagem.
 - **Cor primária**: vermelho `#EA1D2C`, definido em `@theme` como a escala `primary-50` … `primary-950` (classes `bg-primary`, `text-primary-600` etc.). O fundo é branco no modo claro.
-- **Componentes** reutilizados ficam em `@layer components`: `.btn-primary`, `.btn-secondary`, `.nav-link` e `.card`.
+- **Componentes** reutilizados ficam em `@layer components`: `.btn-primary`, `.btn-secondary`, `.nav-link`, `.nav-link-ativo` (grupo do cabeçalho que contém a página atual), `.nav-sublink` (link dos submenus do cabeçalho), `.card` e os ícones de formato do cabeçalho: `.icone-formato` (tamanho e forma) mais uma cor por tipo de arquivo — `.icone-word` (azul), `.icone-excel` (verde), `.icone-powerpoint` (vermelho da marca) e `.icone-json` (âmbar). Nos cartões da página inicial, cada ícone usa a cor do seu formato (o enviado à esquerda e o recebido à direita, ambos em tom claro com `.icone-*`, sem fundo forte), e o PDF continua no vermelho da marca. No cabeçalho, o ícone e a cor são sempre os do formato que não é PDF: o de saída em "Converter de PDF" e "Outras conversões", o do arquivo enviado em "Converter em PDF" (ex.: Excel para PDF → planilha verde). Um formato novo ganha a sua classe `.icone-*` no mesmo padrão (fundo `-50`/ícone `-600`; no escuro, fundo `-950/60`/ícone `-400`).
 - Como o Tailwind só encontra classes escritas por inteiro, não monte nomes de classe por concatenação no JS (ex.: `'bg-' + cor`).
 
 ### Modo escuro
@@ -597,7 +598,7 @@ Todas as páginas de conversão usam o mesmo script, `assets/js/pages/conversor.
 
 O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`assets/js/models/Arquivo.js`), envia o arquivo para o endpoint e dispara o download com `assets/js/utils/geraDownload.js`. O arquivo convertido mantém o nome original, com a nova extensão. Erros da API (campo `mensagem`) aparecem na própria página.
 
-Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates). Na página inicial, inclua também o cartão em "Ferramentas" e o atalho no topo. A ordem, na página inicial e no cabeçalho (telas grandes e menu mobile), é: PDF para outro formato (PDF → X), depois outro formato para PDF (X → PDF) e, sempre por último, JSON ↔ Excel. Uma conversão nova entra no fim do seu grupo.
+Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates). O cabeçalho agrupa as conversões em três submenus suspensos (abrem ao passar o mouse, por clique ou pelo teclado): **Converter de PDF** (PDF → X), **Converter em PDF** (X → PDF) e **Outras conversões** (JSON ↔ Excel). O link novo entra como `<li><a class="nav-sublink">` no submenu do seu grupo, com o ícone do formato à esquerda do texto (regra acima) (o mesmo SVG do cartão da página inicial, dentro de `<span class="icone-formato icone-<formato>">`) e, no menu mobile, abaixo do título do grupo (também com o ícone); na página da conversão, marque o link com `aria-current="page"` e o botão do grupo com `nav-link-ativo`. Na página inicial, inclua também o cartão em "Ferramentas" e o atalho no topo. A ordem, na página inicial e no cabeçalho (telas grandes e menu mobile), é: PDF para outro formato (PDF → X), depois outro formato para PDF (X → PDF) e, sempre por último, JSON ↔ Excel. Uma conversão nova entra no fim do seu grupo.
 
 > O CORS do Express aceita apenas a origem `https://willian-ribeiro.com`. Para consumir a API a partir de outra origem, ajuste `src/app.ts`.
 
