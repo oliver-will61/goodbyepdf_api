@@ -33,21 +33,59 @@
         <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <!-- logo -->
             <a href="/" class="flex items-center gap-2 text-lg font-bold tracking-tight">
-                <span class="grid size-8 place-items-center rounded-lg bg-primary text-white" aria-hidden="true">
-                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                </span>
+                <img src="/assets/img/icone.svg" class="size-8" alt="">
                 <span>goodbye<span class="text-primary">PDF</span></span>
             </a>
 
-            <!-- navegação em telas grandes (a partir de xl; abaixo disso, menu mobile) -->
-            <nav aria-label="Principal" class="hidden items-center gap-1 xl:flex">
-                <a href="/" class="nav-link">Início</a>
-                <a href="/pages/pdf-para-docx.html" class="nav-link">PDF para Word</a>
-                <a href="/pages/pdf-para-pptx.html" class="nav-link" aria-current="page">PDF para PowerPoint</a>
-                <a href="/pages/pdf-para-xlsx.html" class="nav-link">PDF para Excel</a>
-                <a href="/pages/xlsx-para-pdf.html" class="nav-link">Excel para PDF</a>
-                <a href="/pages/json-para-xlsx.html" class="nav-link">JSON para Excel</a>
-                <a href="/pages/xlsx-para-json.html" class="nav-link">Excel para JSON</a>
+            <!-- navegação em telas grandes (a partir de lg; abaixo disso, menu mobile).
+                 Cada grupo abre o submenu ao passar o mouse (CSS) ou por clique/teclado (assets/js/components/submenu.js).
+                 Ordem: PDF para outro formato, outro formato para PDF e, por último, as demais (conversão nova entra no fim do seu grupo) -->
+            <nav aria-label="Principal" class="hidden lg:block">
+                <ul class="flex items-center gap-1">
+                    <li><a href="/" class="nav-link">Início</a></li>
+                    <!-- grupo: Converter de PDF -->
+                    <li class="group relative" data-submenu>
+                        <button type="button" class="nav-link nav-link-ativo inline-flex items-center gap-1" data-submenu-botao aria-expanded="false" aria-controls="submenu-de-pdf">
+                            Converter de PDF
+                            <svg class="size-4 transition group-hover:rotate-180 group-data-[aberto]:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <!-- o pt-2 faz a "ponte" entre o botão e o painel, para o hover não se perder no caminho; cada opção tem à esquerda o ícone do formato que não é PDF (o de saída em "Converter de PDF" e nas outras; o enviado em "Converter em PDF") -->
+                        <div id="submenu-de-pdf" class="invisible absolute top-full left-0 z-50 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-data-[aberto]:visible group-data-[aberto]:opacity-100">
+                            <ul class="card min-w-52 p-2">
+                                <li><a href="/pages/pdf-para-docx.html" class="nav-sublink"><span class="icone-formato icone-word" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></span>PDF para Word</a></li>
+                                <li><a href="/pages/pdf-para-pptx.html" class="nav-sublink" aria-current="page"><span class="icone-formato icone-powerpoint" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg></span>PDF para PowerPoint</a></li>
+                                <li><a href="/pages/pdf-para-xlsx.html" class="nav-sublink"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>PDF para Excel</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <!-- grupo: Converter em PDF -->
+                    <li class="group relative" data-submenu>
+                        <button type="button" class="nav-link inline-flex items-center gap-1" data-submenu-botao aria-expanded="false" aria-controls="submenu-em-pdf">
+                            Converter em PDF
+                            <svg class="size-4 transition group-hover:rotate-180 group-data-[aberto]:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <!-- o pt-2 faz a "ponte" entre o botão e o painel, para o hover não se perder no caminho; cada opção tem à esquerda o ícone do formato que não é PDF (o de saída em "Converter de PDF" e nas outras; o enviado em "Converter em PDF") -->
+                        <div id="submenu-em-pdf" class="invisible absolute top-full left-0 z-50 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-data-[aberto]:visible group-data-[aberto]:opacity-100">
+                            <ul class="card min-w-52 p-2">
+                                <li><a href="/pages/xlsx-para-pdf.html" class="nav-sublink"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>Excel para PDF</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <!-- grupo: Outras conversões -->
+                    <li class="group relative" data-submenu>
+                        <button type="button" class="nav-link inline-flex items-center gap-1" data-submenu-botao aria-expanded="false" aria-controls="submenu-outras">
+                            Outras conversões
+                            <svg class="size-4 transition group-hover:rotate-180 group-data-[aberto]:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <!-- o pt-2 faz a "ponte" entre o botão e o painel, para o hover não se perder no caminho; cada opção tem à esquerda o ícone do formato que não é PDF (o de saída em "Converter de PDF" e nas outras; o enviado em "Converter em PDF") -->
+                        <div id="submenu-outras" class="invisible absolute top-full left-0 z-50 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-data-[aberto]:visible group-data-[aberto]:opacity-100">
+                            <ul class="card min-w-52 p-2">
+                                <li><a href="/pages/json-para-xlsx.html" class="nav-sublink"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>JSON para Excel</a></li>
+                                <li><a href="/pages/xlsx-para-json.html" class="nav-sublink"><span class="icone-formato icone-json" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg></span>Excel para JSON</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
             </nav>
 
             <div class="flex items-center gap-1">
@@ -60,22 +98,25 @@
 
                 <!-- botão do menu em telas pequenas -->
                 <button type="button" data-menu-botao aria-controls="menu-mobile" aria-expanded="false" aria-label="Abrir menu"
-                        class="grid size-10 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 xl:hidden">
+                        class="grid size-10 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 lg:hidden">
                     <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
                 </button>
             </div>
         </div>
 
-        <!-- menu em telas pequenas (aberto/fechado por assets/js/components/menu.js) -->
-        <nav id="menu-mobile" aria-label="Principal" class="hidden border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 xl:hidden">
+        <!-- menu em telas pequenas (aberto/fechado por assets/js/components/menu.js); mesmos grupos do cabeçalho, sempre expandidos, com o mesmo ícone do submenu à esquerda de cada opção -->
+        <nav id="menu-mobile" aria-label="Principal" class="hidden border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 lg:hidden">
             <div class="flex flex-col gap-1">
                 <a href="/" class="nav-link">Início</a>
-                <a href="/pages/pdf-para-docx.html" class="nav-link">PDF para Word</a>
-                <a href="/pages/pdf-para-pptx.html" class="nav-link" aria-current="page">PDF para PowerPoint</a>
-                <a href="/pages/pdf-para-xlsx.html" class="nav-link">PDF para Excel</a>
-                <a href="/pages/xlsx-para-pdf.html" class="nav-link">Excel para PDF</a>
-                <a href="/pages/json-para-xlsx.html" class="nav-link">JSON para Excel</a>
-                <a href="/pages/xlsx-para-json.html" class="nav-link">Excel para JSON</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Converter de PDF</p>
+                <a href="/pages/pdf-para-docx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-word" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></span>PDF para Word</a>
+                <a href="/pages/pdf-para-pptx.html" class="nav-link flex items-center gap-3" aria-current="page"><span class="icone-formato icone-powerpoint" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg></span>PDF para PowerPoint</a>
+                <a href="/pages/pdf-para-xlsx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>PDF para Excel</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Converter em PDF</p>
+                <a href="/pages/xlsx-para-pdf.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>Excel para PDF</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Outras conversões</p>
+                <a href="/pages/json-para-xlsx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>JSON para Excel</a>
+                <a href="/pages/xlsx-para-json.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-json" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg></span>Excel para JSON</a>
             </div>
         </nav>
     </header>
