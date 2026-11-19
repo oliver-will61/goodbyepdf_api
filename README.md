@@ -612,7 +612,7 @@ Todas as páginas de conversão usam o mesmo script, `assets/js/pages/conversor.
 <form data-conversor data-endpoint="/json-xlsx" data-extensao="json" data-extensao-saida="xlsx">
 ```
 
-O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`assets/js/models/Arquivo.js`), envia o arquivo para o endpoint e dispara o download com `assets/js/utils/geraDownload.js`. O arquivo convertido mantém o nome original, com a nova extensão. Erros da API (campo `mensagem`) aparecem na própria página.
+O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`assets/js/models/Arquivo.js`), envia o arquivo para o endpoint e dispara o download com `assets/js/utils/geraDownload.js`. O arquivo convertido mantém o nome original, com a nova extensão. Erros da API (campo `mensagem`) aparecem na própria página. Depois de uma conversão bem-sucedida, abaixo da mensagem verde, aparece um banner de convite para doar, grafite com botão vermelho para se destacar do botão "Converter arquivo" e da mensagem (`<div data-convite-doacao class="hidden …">`, último elemento do `<form>`, com link para `/pages/doacao.html`); ele some ao escolher outro arquivo ou converter de novo e nunca aparece em erro. Uma página de conversão nova copia esse bloco.
 
 Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates). O cabeçalho agrupa as conversões em três submenus suspensos (abrem ao passar o mouse, por clique ou pelo teclado): **Converter de PDF** (PDF → X), **Converter em PDF** (X → PDF) e **Outras conversões** (JSON ↔ Excel). O link novo entra como `<li><a class="nav-sublink">` no submenu do seu grupo, com o ícone do formato à esquerda do texto (regra acima) (o mesmo SVG do cartão da página inicial, dentro de `<span class="icone-formato icone-<formato>">`) e, no menu mobile, abaixo do título do grupo (também com o ícone); na página da conversão, marque o link com `aria-current="page"` e o botão do grupo com `nav-link-ativo`. Na página inicial, inclua também o cartão em "Ferramentas" e o atalho no topo. A ordem, na página inicial e no cabeçalho (telas grandes e menu mobile), é: PDF para outro formato (PDF → X), depois outro formato para PDF (X → PDF) e, sempre por último, JSON ↔ Excel. Uma conversão nova entra no fim do seu grupo.
 
@@ -636,6 +636,8 @@ npm run gera:pix
 ```
 
 > ⚠️ O código Pix fica público no site e no repositório e mostra a chave a quem lê o QR. Use uma **chave aleatória**, nunca CPF, e-mail ou telefone. Antes de publicar, leia o QR com o app do seu banco e confira o nome e a chave.
+
+Nas páginas de conversão, um banner grafite com botão vermelho ("Gostou? Ajude a manter o goodbyePDF no ar." + botão "Apoiar") aparece só depois de uma conversão bem-sucedida (ver [Páginas de conversão](#páginas-de-conversão)).
 
 A página inicial termina com um banner de apoio (seção `aria-labelledby="titulo-apoie"`, degradê no vermelho da marca, título "Ajude a manter o goodbyePDF no ar" e botão "Quero apoiar") que leva a `/pages/doacao.html`; ele não usa variantes `dark:`, porque o degradê vale para os dois temas.
 
@@ -679,7 +681,7 @@ Os testes usam Jest com ts-jest e ficam na pasta `tests/` (irmã de `src/`), com
 | `tests/controllers/pdfXlsx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.xlsx` |
 | `tests/routes/health.routes.test.ts` | `GET /health` 200/503 |
 | `tests/scripts/pix.test.ts` | BR Code do Pix: CRC16 de referência, campos TLV, código completo, corte de nome/cidade, acentos, descrição e dados obrigatórios |
-| `tests/routes/doacao.routes.test.ts` | Página de doação servida com a frase de apoio, `pix.js` e `doacao.js` servidos banner de apoio como última seção da página inicial e link de doação no cabeçalho (botão e menu mobile) e no rodapé de **todas** as páginas |
+| `tests/routes/doacao.routes.test.ts` | Página de doação servida com a frase de apoio, `pix.js` e `doacao.js` servidos banner de apoio como última seção da página inicial, convite para doar (escondido) no formulário de cada página de conversão e link de doação no cabeçalho (botão e menu mobile) e no rodapé de **todas** as páginas |
 
 ```bash
 npx jest tests/services/jsonXlsx.service.test.ts   # um arquivo

@@ -55,6 +55,24 @@ describe('página de doação', () => {
         expect(secao).toContain('href="/pages/doacao.html"')
     })
 
+    it.each(PAGINAS.filter((pagina) => pagina.includes('-para-')))(
+        '%s tem o convite para doar, escondido até a conversão terminar',
+        async (pagina) => {
+            const { text: html } = await request(app).get(pagina).expect(200)
+
+            // o convite fica dentro do formulário de conversão
+            const formulario = trecho(html, 'form')
+            const inicio = formulario.indexOf('<div data-convite-doacao')
+            expect(inicio).toBeGreaterThanOrEqual(0)
+
+            // o convite é o último elemento do formulário: vai do início dele até o fim do <form>
+            const convite = formulario.slice(inicio)
+            // começa escondido (conversor.js mostra só depois do sucesso)
+            expect(convite).toMatch(/^<div data-convite-doacao class="hidden /)
+            expect(convite).toContain('href="/pages/doacao.html"')
+        },
+    )
+
     it.each(PAGINAS)('%s tem o link de doação no cabeçalho (botão e menu mobile) e no rodapé', async (pagina) => {
         const { text: html } = await request(app).get(pagina).expect(200)
 
