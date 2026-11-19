@@ -81,6 +81,15 @@
     @apply bg-primary text-white dark:bg-primary dark:text-white;
   }
 
+  /* botão de filtro das ferramentas da página inicial: contorno (como o .btn-secondary) e cheio no vermelho da marca quando ativo (aria-pressed="true") */
+  .btn-filtro {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 font-semibold text-zinc-800 transition hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-primary-400 dark:hover:text-primary-400;
+  }
+
+  .btn-filtro[aria-pressed="true"] {
+    @apply border-primary bg-primary text-white shadow-sm shadow-primary/30 hover:bg-primary-600 hover:text-white dark:border-primary dark:text-white dark:hover:border-primary-600 dark:hover:text-white;
+  }
+
   /* link do menu de navegação; aria-current="page" marca a página atual */
   .nav-link {
     @apply rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:text-primary dark:text-zinc-300 dark:hover:text-primary-400;
