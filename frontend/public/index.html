@@ -153,143 +153,149 @@
                     Sem cadastro, sem instalar nada.
                 </p>
 
-                <!-- atalhos para as conversões; quebram em mais de uma linha quando não cabem.
-                     Ordem: as conversões de PDF para outro formato vêm primeiro, depois outro formato para PDF e, sempre por último, JSON ↔ Excel (uma conversão nova entra no fim do seu grupo) -->
-                <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
-                    <a href="/pages/pdf-para-docx.html" class="btn-primary w-full sm:w-auto">
-                        PDF para Word
-                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                    </a>
-                    <a href="/pages/pdf-para-pptx.html" class="btn-secondary w-full sm:w-auto">
-                        PDF para PowerPoint
-                    </a>
-                    <a href="/pages/pdf-para-xlsx.html" class="btn-secondary w-full sm:w-auto">
-                        PDF para Excel
-                    </a>
-                    <a href="/pages/xlsx-para-pdf.html" class="btn-secondary w-full sm:w-auto">
-                        Excel para PDF
-                    </a>
-                    <a href="/pages/json-para-xlsx.html" class="btn-secondary w-full sm:w-auto">
-                        JSON para Excel
-                    </a>
-                    <a href="/pages/xlsx-para-json.html" class="btn-secondary w-full sm:w-auto">
-                        Excel para JSON
-                    </a>
+                <!-- filtros das ferramentas: cada botão mostra só a seção do seu grupo (data-filtro = data-grupo da seção) e "Todas" mostra tudo.
+                     Controlados por assets/js/pages/inicio.js; aria-pressed marca o filtro ativo (estilo em .btn-filtro).
+                     Ordem: PDF para outro formato, outro formato para PDF e, por último, as demais (um grupo novo ganha botão e seção) -->
+                <div role="group" aria-label="Filtrar ferramentas" class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
+                    <button type="button" class="btn-filtro w-full sm:w-auto" data-filtro="todas" aria-pressed="true" aria-controls="ferramentas">Todas</button>
+                    <button type="button" class="btn-filtro w-full sm:w-auto" data-filtro="de-pdf" aria-pressed="false" aria-controls="ferramentas">Converter de PDF</button>
+                    <button type="button" class="btn-filtro w-full sm:w-auto" data-filtro="em-pdf" aria-pressed="false" aria-controls="ferramentas">Converter em PDF</button>
+                    <button type="button" class="btn-filtro w-full sm:w-auto" data-filtro="outras" aria-pressed="false" aria-controls="ferramentas">Outras conversões</button>
                 </div>
             </div>
         </section>
 
-        <!-- ===== Ferramentas disponíveis ===== -->
-        <section aria-labelledby="titulo-ferramentas" class="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-            <h2 id="titulo-ferramentas" class="text-2xl font-bold tracking-tight sm:text-3xl">Ferramentas</h2>
-            <p class="mt-2 text-zinc-600 dark:text-zinc-400">Escolha o tipo de conversão.</p>
+        <!-- ===== Ferramentas: uma seção por grupo de conversão =====
+             Cada <section data-grupo> corresponde a um botão de filtro do topo (data-filtro); sem JS, todas ficam visíveis.
+             Ícones dos cartões: o da esquerda é o formato enviado e o da direita o recebido, ambos em tom claro; cada formato tem a sua cor (.icone-* em main.css) e o PDF fica no vermelho da marca.
+             Ordem: PDF para outro formato, depois outro formato para PDF e, sempre por último, JSON ↔ Excel (uma conversão nova entra no fim da seção do seu grupo) -->
+        <div id="ferramentas" class="mx-auto flex max-w-6xl flex-col gap-16 px-4 pb-20 sm:px-6">
+            <!-- seção: Converter de PDF -->
+            <section data-grupo="de-pdf" aria-labelledby="titulo-de-pdf">
+                <h2 id="titulo-de-pdf" class="text-2xl font-bold tracking-tight sm:text-3xl">Converter de PDF</h2>
+                <p class="mt-2 text-zinc-600 dark:text-zinc-400">Transforme um PDF em documento, apresentação ou planilha.</p>
 
-            <div class="mt-8 grid gap-6 sm:grid-cols-2">
-                <!-- ícones: o da esquerda é o formato enviado e o da direita o recebido, ambos em tom claro; cada formato tem a sua cor (.icone-* em main.css) e o PDF fica no vermelho da marca -->
-                <!-- ordem: as conversões de PDF para outro formato vêm primeiro, depois outro formato para PDF e, sempre por último, JSON ↔ Excel (uma conversão nova entra no fim do seu grupo) -->
-                <!-- cartão: PDF → Word -->
-                <a href="/pages/pdf-para-docx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
-                    <div class="flex items-center gap-3">
-                        <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                        </span>
-                        <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        <span class="grid size-12 place-items-center rounded-xl icone-word" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                        </span>
-                    </div>
-                    <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">PDF para Word</h3>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Envie um <code class="font-mono">.pdf</code> e receba um documento <code class="font-mono">.docx</code> editável, com textos, tabelas e imagens.
-                    </p>
-                </a>
+                <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- cartão: PDF → Word -->
+                    <a href="/pages/pdf-para-docx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                            </span>
+                            <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            <span class="grid size-12 place-items-center rounded-xl icone-word" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                            </span>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">PDF para Word</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            Envie um <code class="font-mono">.pdf</code> e receba um documento <code class="font-mono">.docx</code> editável, com textos, tabelas e imagens.
+                        </p>
+                    </a>
 
-                <!-- cartão: PDF → PowerPoint -->
-                <a href="/pages/pdf-para-pptx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
-                    <div class="flex items-center gap-3">
-                        <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                        </span>
-                        <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        <span class="grid size-12 place-items-center rounded-xl icone-powerpoint" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg>
-                        </span>
-                    </div>
-                    <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">PDF para PowerPoint</h3>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Envie um <code class="font-mono">.pdf</code> e receba uma apresentação <code class="font-mono">.pptx</code> com um slide para cada página.
-                    </p>
-                </a>
+                    <!-- cartão: PDF → PowerPoint -->
+                    <a href="/pages/pdf-para-pptx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                            </span>
+                            <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            <span class="grid size-12 place-items-center rounded-xl icone-powerpoint" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg>
+                            </span>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">PDF para PowerPoint</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            Envie um <code class="font-mono">.pdf</code> e receba uma apresentação <code class="font-mono">.pptx</code> com um slide para cada página.
+                        </p>
+                    </a>
 
-                <!-- cartão: PDF → Excel -->
-                <a href="/pages/pdf-para-xlsx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
-                    <div class="flex items-center gap-3">
-                        <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                        </span>
-                        <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
-                        </span>
-                    </div>
-                    <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">PDF para Excel</h3>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Envie um <code class="font-mono">.pdf</code> e receba uma planilha <code class="font-mono">.xlsx</code> com as tabelas do documento, uma por aba.
-                    </p>
-                </a>
+                    <!-- cartão: PDF → Excel -->
+                    <a href="/pages/pdf-para-xlsx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                            </span>
+                            <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
+                            </span>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">PDF para Excel</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            Envie um <code class="font-mono">.pdf</code> e receba uma planilha <code class="font-mono">.xlsx</code> com as tabelas do documento, uma por aba.
+                        </p>
+                    </a>
+                </div>
+            </section>
 
-                <!-- cartão: Excel → PDF -->
-                <a href="/pages/xlsx-para-pdf.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
-                    <div class="flex items-center gap-3">
-                        <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
-                        </span>
-                        <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                        </span>
-                    </div>
-                    <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">Excel para PDF</h3>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Envie uma planilha <code class="font-mono">.xlsx</code> e receba um <code class="font-mono">.pdf</code> com todas as abas, mantendo a formatação e os gráficos.
-                    </p>
-                </a>
+            <!-- seção: Converter em PDF -->
+            <section data-grupo="em-pdf" aria-labelledby="titulo-em-pdf">
+                <h2 id="titulo-em-pdf" class="text-2xl font-bold tracking-tight sm:text-3xl">Converter em PDF</h2>
+                <p class="mt-2 text-zinc-600 dark:text-zinc-400">Gere um PDF a partir de outros formatos.</p>
 
-                <!-- cartão: JSON → Excel -->
-                <a href="/pages/json-para-xlsx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
-                    <div class="flex items-center gap-3">
-                        <span class="grid size-12 place-items-center rounded-xl icone-json" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg>
-                        </span>
-                        <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
-                        </span>
-                    </div>
-                    <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">JSON para Excel</h3>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Envie uma lista de objetos em <code class="font-mono">.json</code> e receba uma planilha <code class="font-mono">.xlsx</code> pronta para abrir.
-                    </p>
-                </a>
+                <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- cartão: Excel → PDF -->
+                    <a href="/pages/xlsx-para-pdf.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
+                            </span>
+                            <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            <span class="grid size-12 place-items-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                            </span>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">Excel para PDF</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            Envie uma planilha <code class="font-mono">.xlsx</code> e receba um <code class="font-mono">.pdf</code> com todas as abas, mantendo a formatação e os gráficos.
+                        </p>
+                    </a>
+                </div>
+            </section>
 
-                <!-- cartão: Excel → JSON -->
-                <a href="/pages/xlsx-para-json.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
-                    <div class="flex items-center gap-3">
-                        <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
-                        </span>
-                        <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        <span class="grid size-12 place-items-center rounded-xl icone-json" aria-hidden="true">
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg>
-                        </span>
-                    </div>
-                    <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">Excel para JSON</h3>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Envie uma planilha <code class="font-mono">.xlsx</code> e receba os dados da primeira aba como uma lista de objetos em <code class="font-mono">.json</code>.
-                    </p>
-                </a>
-            </div>
-        </section>
+            <!-- seção: Outras conversões -->
+            <section data-grupo="outras" aria-labelledby="titulo-outras">
+                <h2 id="titulo-outras" class="text-2xl font-bold tracking-tight sm:text-3xl">Outras conversões</h2>
+                <p class="mt-2 text-zinc-600 dark:text-zinc-400">Converta dados entre JSON e planilhas Excel.</p>
+
+                <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- cartão: JSON → Excel -->
+                    <a href="/pages/json-para-xlsx.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 place-items-center rounded-xl icone-json" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg>
+                            </span>
+                            <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
+                            </span>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">JSON para Excel</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            Envie uma lista de objetos em <code class="font-mono">.json</code> e receba uma planilha <code class="font-mono">.xlsx</code> pronta para abrir.
+                        </p>
+                    </a>
+
+                    <!-- cartão: Excel → JSON -->
+                    <a href="/pages/xlsx-para-json.html" class="card group p-6 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary/10 dark:hover:border-primary-800">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 place-items-center rounded-xl icone-excel" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg>
+                            </span>
+                            <svg class="size-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            <span class="grid size-12 place-items-center rounded-xl icone-json" aria-hidden="true">
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg>
+                            </span>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold group-hover:text-primary dark:group-hover:text-primary-400">Excel para JSON</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            Envie uma planilha <code class="font-mono">.xlsx</code> e receba os dados da primeira aba como uma lista de objetos em <code class="font-mono">.json</code>.
+                        </p>
+                    </a>
+                </div>
+            </section>
+        </div>
 
         <!-- ===== Como funciona ===== -->
         <section id="como-funciona" aria-labelledby="titulo-como-funciona" class="border-y border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
@@ -380,5 +386,6 @@
     <script type="module" src="/assets/js/components/tema.js"></script>
     <script type="module" src="/assets/js/components/menu.js"></script>
     <script type="module" src="/assets/js/components/submenu.js"></script>
+    <script type="module" src="/assets/js/pages/inicio.js"></script>
 </body>
 </html>
