@@ -1,0 +1,56 @@
+import request from 'supertest'
+import app from '../../src/app'
+
+// a página de doação é estática: o conversor Python é mockado só para o app não tentar alcançá-lo
+jest.mock('../../src/services/conversor.service')
+
+// todas as páginas do site, que repetem o mesmo cabeçalho e rodapé
+const PAGINAS = [
+    '/',
+    '/pages/pdf-para-docx.html',
+    '/pages/pdf-para-pptx.html',
+    '/pages/pdf-para-xlsx.html',
+    '/pages/xlsx-para-pdf.html',
+    '/pages/json-para-xlsx.html',
+    '/pages/xlsx-para-json.html',
+    '/pages/doacao.html',
+]
+
+/** Recorta o trecho do HTML entre a abertura e o fechamento de uma tag (ex.: header, footer) */
+function trecho(html: string, tag: string): string {
+    const inicio = html.indexOf(`<${tag}`)
+    const fim = html.indexOf(`</${tag}>`)
+    expect(inicio).toBeGreaterThanOrEqual(0)
+    expect(fim).toBeGreaterThan(inicio)
+    return html.slice(inicio, fim)
+}
+
+describe('página de doação', () => {
+
+    it('GET /pages/doacao.html responde 200 com a frase de apoio', async () => {
+        const resposta = await request(app).get('/pages/doacao.html').expect(200)
+
+        expect(resposta.text).toContain('Ajude a manter o projeto no ar')
+        expect(resposta.text).toContain('/assets/js/pages/doacao.js')
+    })
+
+    it('serve o script da página e a configuração do Pix', async () => {
+        await request(app).get('/assets/js/pages/doacao.js').expect(200)
+
+        const config = await request(app).get('/assets/js/config/pix.js').expect(200)
+        expect(config.text).toContain('export const PIX_COPIA_E_COLA')
+    })
+
+    it.each(PAGINAS)('%s tem o link de doação no cabeçalho (botão e menu mobile) e no rodapé', async (pagina) => {
+        const { text: html } = await request(app).get(pagina).expect(200)
+
+        const cabecalho = trecho(html, 'header')
+        // botão "Apoiar" do cabeçalho
+        expect(cabecalho).toMatch(/<a href="\/pages\/doacao\.html" class="btn-apoiar/)
+        // link no menu mobile (o último <nav> do cabeçalho)
+        const menuMobile = cabecalho.slice(cabecalho.indexOf('id="menu-mobile"'))
+        expect(menuMobile).toContain('<a href="/pages/doacao.html" class="nav-link')
+        // link no rodapé
+        expect(trecho(html, 'footer')).toContain('href="/pages/doacao.html"')
+    })
+})

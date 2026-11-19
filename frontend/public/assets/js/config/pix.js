@@ -1,0 +1,2 @@
+// gerado por `npm run gera:pix` (scripts/geraPix.ts): não edite à mão
+export const PIX_COPIA_E_COLA = "00020126580014br.gov.bcb.pix01360bd20169-6177-43a0-91cf-6510635b8ceb5204000053039865802BR5925WILIIAN DE OLIVEIRA RIBEI6013FLORIANOPOLIS62070503***63044E5E"

@@ -20,6 +20,7 @@ A arquitetura separa duas responsabilidades:
 - [Endpoints](#endpoints)
 - [Validação de arquivos e erros](#validação-de-arquivos-e-erros)
 - [Frontend](#frontend)
+- [Doações (Pix)](#doações-pix)
 - [Testes](#testes)
 - [Pendências conhecidas](#pendências-conhecidas)
 - [Licença](#licença)
@@ -134,9 +135,14 @@ goodbyepdf_api/
 │   │   ├── formatos.ts           # Extensões, MIME types e assinaturas (.xlsx, .pdf)
 │   │   └── limites.ts            # Tamanho máximo de upload
 │
-├── tests/                        # Testes Jest (mesmas pastas de src/: routes/, services/, validators/...)
+├── scripts/                      # Scripts de apoio (fora do build)
+│   ├── pix.ts                    # Monta o "Pix copia e cola" estático (BR Code + CRC16)
+│   ├── geraPix.ts                # npm run gera:pix: gera o QR Code e o código da página de doação
+│   └── tsconfig.json             # tsconfig usado pelo ts-node ao rodar os scripts
+│
+├── tests/                        # Testes Jest (mesmas pastas de src/: routes/, services/, validators/...; scripts/ para os scripts de apoio)
 │   ├── fixtures.ts               # Dados de exemplo usados pelos testes
-│   └── tsconfig.json             # tsconfig do ts-jest (enxerga src/ e tests/)
+│   └── tsconfig.json             # tsconfig do ts-jest (enxerga src/, scripts/ e tests/)
 │
 ├── python-service/               # Serviço de conversão (FastAPI)
 │   ├── main.py                   # App FastAPI e rotas /api/xlsx-json, /api/json-xlsx, /api/pdf-docx, /api/pdf-pptx, /api/xlsx-pdf e /api/pdf-xlsx
@@ -165,17 +171,22 @@ goodbyepdf_api/
 │       │   ├── pdf-para-docx.html    # Conversão PDF → Word
 │       │   ├── pdf-para-pptx.html    # Conversão PDF → PowerPoint
 │       │   ├── xlsx-para-pdf.html    # Conversão Excel → PDF
-│       │   └── pdf-para-xlsx.html    # Conversão PDF → Excel
+│       │   ├── pdf-para-xlsx.html    # Conversão PDF → Excel
+│       │   └── doacao.html           # Página de doação (Pix)
 │       └── assets/
 │           ├── css/styles.css    # CSS gerado pelo Tailwind (não versionado)
-│           ├── img/favicon.svg
+│           ├── img/
+│           │   ├── favicon.svg
+│           │   └── pix-qrcode.svg    # QR Code do Pix (gerado por npm run gera:pix)
 │           └── js/
 │               ├── components/
 │               │   ├── tema.js   # Alterna modo claro/escuro e salva a escolha
 │               │   ├── menu.js   # Menu de navegação em telas pequenas
 │               │   └── submenu.js # Submenus suspensos do cabeçalho (clique, teclado, Esc)
 │               ├── models/Arquivo.js     # Validação de extensão no cliente e envio do arquivo
+│               ├── config/pix.js         # "Pix copia e cola" (gerado por npm run gera:pix; null = não configurado)
 │               ├── pages/conversor.js    # Lógica das páginas de conversão (upload, arrastar e soltar, download)
+│               ├── pages/doacao.js       # Página de doação: mostra o QR Code e copia o código Pix
 │               └── utils/geraDownload.js # Converte a resposta em blob e dispara o download
 │
 ├── postman-testes/               # Arquivos de exemplo usados em testes manuais
@@ -220,6 +231,10 @@ cp .env.example .env
 | `CONVERSOR_API_URL` | URL base do serviço Python (sem barra no final)    | `http://localhost:5000` |
 | `DOMINIO`           | Domínio público do deploy (só `docker-compose.prod.yml`; obrigatório nele) | `exemplo.com` |
 | `WORKERS_CONVERSOR` | Workers do conversor Python em produção (só `docker-compose.prod.yml`) | `2` |
+| `PIX_CHAVE`         | Chave Pix das doações (só `npm run gera:pix`; use uma chave **aleatória**) | `123e4567-e12b-...` |
+| `PIX_NOME`          | Nome de quem recebe as doações (até 25 caracteres; só `npm run gera:pix`) | `Fulano de Tal` |
+| `PIX_CIDADE`        | Cidade de quem recebe (até 15 caracteres; só `npm run gera:pix`) | `Sao Paulo` |
+| `PIX_DESCRICAO`     | Opcional: mensagem mostrada no app do banco (só `npm run gera:pix`) | `goodbyePDF` |
 
 ### Serviço Python: `./python-service/.env`
 
@@ -573,13 +588,14 @@ O frontend é HTML e JavaScript puro (ES modules), estilizado com **Tailwind CSS
 | `/pages/pdf-para-pptx.html`   | Conversão PDF → PowerPoint |
 | `/pages/xlsx-para-pdf.html`   | Conversão Excel → PDF      |
 | `/pages/pdf-para-xlsx.html`   | Conversão PDF → Excel      |
+| `/pages/doacao.html`          | Doação via Pix             |
 
 ### Estilos (Tailwind)
 
 - A entrada é `frontend/src/styles/main.css`. O Tailwind lê as classes usadas nos HTML e JS de `frontend/public` e gera `frontend/public/assets/css/styles.css`.
 - Scripts: `npm run build:css` (minificado), `npm run dev:css` (modo watch). O `npm run build` já gera o CSS minificado e o `npm run dev` gera o CSS legível (sem minificar); no Docker, ele é gerado na etapa de build da imagem.
 - **Cor primária**: vermelho `#EA1D2C`, definido em `@theme` como a escala `primary-50` … `primary-950` (classes `bg-primary`, `text-primary-600` etc.). O fundo é branco no modo claro.
-- **Componentes** reutilizados ficam em `@layer components`: `.btn-primary`, `.btn-secondary`, `.nav-link`, `.nav-link-ativo` (grupo do cabeçalho que contém a página atual), `.nav-sublink` (link dos submenus do cabeçalho), `.card` e os ícones de formato do cabeçalho: `.icone-formato` (tamanho e forma) mais uma cor por tipo de arquivo — `.icone-word` (azul), `.icone-excel` (verde), `.icone-powerpoint` (vermelho da marca) e `.icone-json` (âmbar). Nos cartões da página inicial, cada ícone usa a cor do seu formato (o enviado à esquerda e o recebido à direita, ambos em tom claro com `.icone-*`, sem fundo forte), e o PDF continua no vermelho da marca. No cabeçalho, o ícone e a cor são sempre os do formato que não é PDF: o de saída em "Converter de PDF" e "Outras conversões", o do arquivo enviado em "Converter em PDF" (ex.: Excel para PDF → planilha verde). Um formato novo ganha a sua classe `.icone-*` no mesmo padrão (fundo `-50`/ícone `-600`; no escuro, fundo `-950/60`/ícone `-400`).
+- **Componentes** reutilizados ficam em `@layer components`: `.btn-primary`, `.btn-secondary`, `.nav-link`, `.nav-link-ativo` (grupo do cabeçalho que contém a página atual), `.nav-sublink` (link dos submenus do cabeçalho), `.btn-apoiar` (botão "Apoiar" do cabeçalho; cheio quando tem `aria-current="page"`), `.icone-doacao` (coração do link de doação no menu mobile), `.card` e os ícones de formato do cabeçalho: `.icone-formato` (tamanho e forma) mais uma cor por tipo de arquivo — `.icone-word` (azul), `.icone-excel` (verde), `.icone-powerpoint` (vermelho da marca) e `.icone-json` (âmbar). Nos cartões da página inicial, cada ícone usa a cor do seu formato (o enviado à esquerda e o recebido à direita, ambos em tom claro com `.icone-*`, sem fundo forte), e o PDF continua no vermelho da marca. No cabeçalho, o ícone e a cor são sempre os do formato que não é PDF: o de saída em "Converter de PDF" e "Outras conversões", o do arquivo enviado em "Converter em PDF" (ex.: Excel para PDF → planilha verde). Um formato novo ganha a sua classe `.icone-*` no mesmo padrão (fundo `-50`/ícone `-600`; no escuro, fundo `-950/60`/ícone `-400`).
 - Como o Tailwind só encontra classes escritas por inteiro, não monte nomes de classe por concatenação no JS (ex.: `'bg-' + cor`).
 
 ### Modo escuro
@@ -600,7 +616,28 @@ O script aceita clique ou arrastar e soltar, valida a extensão no navegador (`a
 
 Para uma conversão nova no frontend, copie uma das páginas de `pages/`, ajuste os `data-*`, os textos e o `accept` do input, e adicione o link no cabeçalho e no menu mobile de todas as páginas (o cabeçalho e o rodapé são repetidos em cada HTML, já que não há etapa de build de templates). O cabeçalho agrupa as conversões em três submenus suspensos (abrem ao passar o mouse, por clique ou pelo teclado): **Converter de PDF** (PDF → X), **Converter em PDF** (X → PDF) e **Outras conversões** (JSON ↔ Excel). O link novo entra como `<li><a class="nav-sublink">` no submenu do seu grupo, com o ícone do formato à esquerda do texto (regra acima) (o mesmo SVG do cartão da página inicial, dentro de `<span class="icone-formato icone-<formato>">`) e, no menu mobile, abaixo do título do grupo (também com o ícone); na página da conversão, marque o link com `aria-current="page"` e o botão do grupo com `nav-link-ativo`. Na página inicial, inclua também o cartão em "Ferramentas" e o atalho no topo. A ordem, na página inicial e no cabeçalho (telas grandes e menu mobile), é: PDF para outro formato (PDF → X), depois outro formato para PDF (X → PDF) e, sempre por último, JSON ↔ Excel. Uma conversão nova entra no fim do seu grupo.
 
+Além dos grupos de conversão, todo cabeçalho tem o botão **Apoiar** (`.btn-apoiar`, a partir de `sm`, antes do botão de tema) e, no fim do menu mobile, o grupo "Apoie o projeto" com o link "Fazer uma doação"; o rodapé tem o link "Apoie o projeto" ao lado de "Código no GitHub". Todos levam a `/pages/doacao.html`, e uma página nova precisa repeti-los (o teste `tests/routes/doacao.routes.test.ts` confere todas as páginas).
+
 > O CORS do Express aceita apenas a origem `https://willian-ribeiro.com`. Para consumir a API a partir de outra origem, ajuste `src/app.ts`.
+
+---
+
+## Doações (Pix)
+
+A página `/pages/doacao.html` pede apoio ao projeto ("Ajude a manter o projeto no ar") com **Pix estático**: um QR Code e um "Pix copia e cola" fixos, sem valor (quem doa digita o valor no app do banco). Não há gateway de pagamento, taxa nem backend: o dinheiro cai direto na conta da chave, e o servidor só entrega arquivos estáticos.
+
+O código segue o padrão BR Code (EMV) do Banco Central e é montado por `scripts/pix.ts` (campos TLV + CRC16-CCITT no fim). Para gerar ou trocar o Pix:
+
+```bash
+# 1. no .env: PIX_CHAVE, PIX_NOME, PIX_CIDADE (e, se quiser, PIX_DESCRICAO)
+# 2. gera frontend/public/assets/img/pix-qrcode.svg e frontend/public/assets/js/config/pix.js
+npm run gera:pix
+# 3. faça o commit dos dois arquivos gerados (o servidor não gera nada em tempo de execução)
+```
+
+> ⚠️ O código Pix fica público no site e no repositório e mostra a chave a quem lê o QR. Use uma **chave aleatória**, nunca CPF, e-mail ou telefone. Antes de publicar, leia o QR com o app do seu banco e confira o nome e a chave.
+
+Enquanto `PIX_COPIA_E_COLA` for `null` (Pix ainda não gerado), a página esconde o QR Code e mostra um aviso de "em breve". O botão "Copiar código Pix" usa a API de área de transferência (exige HTTPS ou `localhost`); se ela falhar, o código fica selecionado para cópia manual.
 
 ---
 
@@ -639,13 +676,15 @@ Os testes usam Jest com ts-jest e ficam na pasta `tests/` (irmã de `src/`), com
 | `tests/routes/pdfXlsx.routes.test.ts` | Integração com `supertest`: download do `.xlsx`, erros 400 (sem arquivo, extensão, assinatura, vazio), limite de 10 MB (aceita exatamente 10 MB, 413 acima), 422 e 500 |
 | `tests/controllers/pdfXlsx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.xlsx` |
 | `tests/routes/health.routes.test.ts` | `GET /health` 200/503 |
+| `tests/scripts/pix.test.ts` | BR Code do Pix: CRC16 de referência, campos TLV, código completo, corte de nome/cidade, acentos, descrição e dados obrigatórios |
+| `tests/routes/doacao.routes.test.ts` | Página de doação servida com a frase de apoio, `pix.js` e `doacao.js` servidos e link de doação no cabeçalho (botão e menu mobile) e no rodapé de **todas** as páginas |
 
 ```bash
 npx jest tests/services/jsonXlsx.service.test.ts   # um arquivo
 npx jest -t "INVALID_JSON"                                 # testes pelo nome
 ```
 
-Dados de exemplo compartilhados ficam em `tests/fixtures.ts`. Os testes ficam fora do build (o `tsconfig.json` da raiz só inclui `src/`); o ts-jest usa `tests/tsconfig.json`, que herda o da raiz e enxerga `src/` e `tests/`.
+Dados de exemplo compartilhados ficam em `tests/fixtures.ts`. Os testes ficam fora do build (o `tsconfig.json` da raiz só inclui `src/`); o ts-jest usa `tests/tsconfig.json`, que herda o da raiz e enxerga `src/`, `scripts/` e `tests/`.
 
 ---
 
