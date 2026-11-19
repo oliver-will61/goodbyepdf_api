@@ -317,7 +317,7 @@
         </section>
 
         <!-- ===== Open source ===== -->
-        <section aria-labelledby="titulo-open-source" class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <section aria-labelledby="titulo-open-source" class="mx-auto max-w-6xl px-4 pt-20 pb-10 sm:px-6">
             <div class="card flex flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 id="titulo-open-source" class="text-2xl font-bold tracking-tight">Feito em código aberto</h2>
@@ -329,6 +329,39 @@
                     Ver no GitHub
                     <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
                 </a>
+            </div>
+        </section>
+
+        <!-- ===== Apoie o projeto (leva à página de doação) ===== -->
+        <section aria-labelledby="titulo-apoie" class="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+            <!-- banner em degradê no vermelho da marca: destaca-se dos cards neutros e serve igual nos dois temas -->
+            <div class="relative overflow-hidden rounded-3xl bg-linear-to-br from-primary to-primary-700 p-8 text-white shadow-xl shadow-primary/30 sm:p-12">
+
+                <div class="relative flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="max-w-2xl">
+                        <!-- selo -->
+                        <span class="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide uppercase">
+                            Projeto independente
+                        </span>
+                        <h2 id="titulo-apoie" class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                            Ajude a manter o goodbyePDF no ar
+                        </h2>
+                        <p class="mt-3 text-lg text-white/85">
+                            Aqui é tudo gratuito, sem anúncios e sem cadastro. Mas o servidor e a manutenção têm custo,
+                            e qualquer valor pelo Pix faz diferença para o projeto continuar existindo.
+                        </p>
+                    </div>
+
+                    <!-- chamada para a página de doação -->
+                    <div class="flex shrink-0 flex-col items-start gap-2 lg:items-center">
+                        <a href="/pages/doacao.html"
+                           class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-lg font-bold text-primary shadow-lg shadow-primary-900/30 transition hover:-translate-y-0.5 hover:bg-primary-50 focus-visible:outline-white active:translate-y-0">
+                            <svg class="size-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+                            Quero apoiar
+                        </a>
+                        <span class="text-sm text-white/75">Leva menos de 1 minuto, direto pelo Pix</span>
+                    </div>
+                </div>
             </div>
         </section>
     </main>

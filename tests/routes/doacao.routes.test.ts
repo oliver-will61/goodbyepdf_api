@@ -41,6 +41,20 @@ describe('página de doação', () => {
         expect(config.text).toContain('export const PIX_COPIA_E_COLA')
     })
 
+    it('a página inicial termina com a seção de apoio que leva à página de doação', async () => {
+        const { text: html } = await request(app).get('/').expect(200)
+
+        const principal = trecho(html, 'main')
+        const inicioSecao = principal.indexOf('<section aria-labelledby="titulo-apoie"')
+        expect(inicioSecao).toBeGreaterThanOrEqual(0)
+        // é a última seção do <main>
+        expect(principal.indexOf('<section', inicioSecao + 1)).toBe(-1)
+
+        const secao = principal.slice(inicioSecao)
+        expect(secao).toContain('Ajude a manter o goodbyePDF no ar')
+        expect(secao).toContain('href="/pages/doacao.html"')
+    })
+
     it.each(PAGINAS)('%s tem o link de doação no cabeçalho (botão e menu mobile) e no rodapé', async (pagina) => {
         const { text: html } = await request(app).get(pagina).expect(200)
 

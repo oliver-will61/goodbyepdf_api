@@ -637,6 +637,8 @@ npm run gera:pix
 
 > ⚠️ O código Pix fica público no site e no repositório e mostra a chave a quem lê o QR. Use uma **chave aleatória**, nunca CPF, e-mail ou telefone. Antes de publicar, leia o QR com o app do seu banco e confira o nome e a chave.
 
+A página inicial termina com um banner de apoio (seção `aria-labelledby="titulo-apoie"`, degradê no vermelho da marca, título "Ajude a manter o goodbyePDF no ar" e botão "Quero apoiar") que leva a `/pages/doacao.html`; ele não usa variantes `dark:`, porque o degradê vale para os dois temas.
+
 Enquanto `PIX_COPIA_E_COLA` for `null` (Pix ainda não gerado), a página esconde o QR Code e mostra um aviso de "em breve". O botão "Copiar código Pix" usa a API de área de transferência (exige HTTPS ou `localhost`); se ela falhar, o código fica selecionado para cópia manual.
 
 ---
@@ -677,7 +679,7 @@ Os testes usam Jest com ts-jest e ficam na pasta `tests/` (irmã de `src/`), com
 | `tests/controllers/pdfXlsx.controller.test.ts` | Arquivo sem buffer (NO_FILE sem chamar o service) e envio do `.xlsx` |
 | `tests/routes/health.routes.test.ts` | `GET /health` 200/503 |
 | `tests/scripts/pix.test.ts` | BR Code do Pix: CRC16 de referência, campos TLV, código completo, corte de nome/cidade, acentos, descrição e dados obrigatórios |
-| `tests/routes/doacao.routes.test.ts` | Página de doação servida com a frase de apoio, `pix.js` e `doacao.js` servidos e link de doação no cabeçalho (botão e menu mobile) e no rodapé de **todas** as páginas |
+| `tests/routes/doacao.routes.test.ts` | Página de doação servida com a frase de apoio, `pix.js` e `doacao.js` servidos banner de apoio como última seção da página inicial e link de doação no cabeçalho (botão e menu mobile) e no rodapé de **todas** as páginas |
 
 ```bash
 npx jest tests/services/jsonXlsx.service.test.ts   # um arquivo
