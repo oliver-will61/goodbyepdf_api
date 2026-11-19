@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apoie o GoodbyePDF com uma doação via Pix e ajude a manter o conversor gratuito e open source no ar.">
+    <meta name="theme-color" content="#EA1D2C">
+    <title>Apoie o projeto · GoodbyePDF</title>
+    <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+
+    <!-- aplica o tema salvo (ou o do sistema) antes de renderizar, evitando o "piscar" do modo claro -->
+    <script>
+        (function () {
+            var tema = null
+            try { tema = localStorage.getItem('tema') } catch (e) {}
+            var escuro = tema ? tema === 'escuro' : window.matchMedia('(prefers-color-scheme: dark)').matches
+            document.documentElement.classList.toggle('dark', escuro)
+        })()
+    </script>
+
+    <!-- CSS gerado pelo Tailwind a partir de frontend/src/styles/main.css -->
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body class="flex min-h-screen flex-col">
+
+    <!-- link para pular a navegação (acessibilidade por teclado) -->
+    <a href="#conteudo" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white">
+        Pular para o conteúdo
+    </a>
+
+    <!-- ===== Cabeçalho (repetido em todas as páginas) ===== -->
+    <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/85 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/85">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+            <!-- logo -->
+            <a href="/" class="flex items-center gap-2 text-lg font-bold tracking-tight">
+                <img src="/assets/img/icone.svg" class="size-8" alt="">
+                <span>goodbye<span class="text-primary">PDF</span></span>
+            </a>
+
+            <!-- navegação em telas grandes (a partir de lg; abaixo disso, menu mobile).
+                 Cada grupo abre o submenu ao passar o mouse (CSS) ou por clique/teclado (assets/js/components/submenu.js).
+                 Ordem: PDF para outro formato, outro formato para PDF e, por último, as demais (conversão nova entra no fim do seu grupo) -->
+            <nav aria-label="Principal" class="hidden lg:block">
+                <ul class="flex items-center gap-1">
+                    <li><a href="/" class="nav-link">Início</a></li>
+                    <!-- grupo: Converter de PDF -->
+                    <li class="group relative" data-submenu>
+                        <button type="button" class="nav-link inline-flex items-center gap-1" data-submenu-botao aria-expanded="false" aria-controls="submenu-de-pdf">
+                            Converter de PDF
+                            <svg class="size-4 transition group-hover:rotate-180 group-data-[aberto]:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <!-- o pt-2 faz a "ponte" entre o botão e o painel, para o hover não se perder no caminho; cada opção tem à esquerda o ícone do formato que não é PDF (o de saída em "Converter de PDF" e nas outras; o enviado em "Converter em PDF") -->
+                        <div id="submenu-de-pdf" class="invisible absolute top-full left-0 z-50 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-data-[aberto]:visible group-data-[aberto]:opacity-100">
+                            <ul class="card min-w-52 p-2">
+                                <li><a href="/pages/pdf-para-docx.html" class="nav-sublink"><span class="icone-formato icone-word" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></span>PDF para Word</a></li>
+                                <li><a href="/pages/pdf-para-pptx.html" class="nav-sublink"><span class="icone-formato icone-powerpoint" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg></span>PDF para PowerPoint</a></li>
+                                <li><a href="/pages/pdf-para-xlsx.html" class="nav-sublink"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>PDF para Excel</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <!-- grupo: Converter em PDF -->
+                    <li class="group relative" data-submenu>
+                        <button type="button" class="nav-link inline-flex items-center gap-1" data-submenu-botao aria-expanded="false" aria-controls="submenu-em-pdf">
+                            Converter em PDF
+                            <svg class="size-4 transition group-hover:rotate-180 group-data-[aberto]:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <!-- o pt-2 faz a "ponte" entre o botão e o painel, para o hover não se perder no caminho; cada opção tem à esquerda o ícone do formato que não é PDF (o de saída em "Converter de PDF" e nas outras; o enviado em "Converter em PDF") -->
+                        <div id="submenu-em-pdf" class="invisible absolute top-full left-0 z-50 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-data-[aberto]:visible group-data-[aberto]:opacity-100">
+                            <ul class="card min-w-52 p-2">
+                                <li><a href="/pages/xlsx-para-pdf.html" class="nav-sublink"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>Excel para PDF</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <!-- grupo: Outras conversões -->
+                    <li class="group relative" data-submenu>
+                        <button type="button" class="nav-link inline-flex items-center gap-1" data-submenu-botao aria-expanded="false" aria-controls="submenu-outras">
+                            Outras conversões
+                            <svg class="size-4 transition group-hover:rotate-180 group-data-[aberto]:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <!-- o pt-2 faz a "ponte" entre o botão e o painel, para o hover não se perder no caminho; cada opção tem à esquerda o ícone do formato que não é PDF (o de saída em "Converter de PDF" e nas outras; o enviado em "Converter em PDF") -->
+                        <div id="submenu-outras" class="invisible absolute top-full left-0 z-50 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-data-[aberto]:visible group-data-[aberto]:opacity-100">
+                            <ul class="card min-w-52 p-2">
+                                <li><a href="/pages/json-para-xlsx.html" class="nav-sublink"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>JSON para Excel</a></li>
+                                <li><a href="/pages/xlsx-para-json.html" class="nav-sublink"><span class="icone-formato icone-json" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg></span>Excel para JSON</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="flex items-center gap-1">
+                <!-- botão de doação (a partir de sm; abaixo disso, fica no fim do menu mobile) -->
+                <a href="/pages/doacao.html" class="btn-apoiar hidden sm:inline-flex" aria-current="page">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+                    Apoiar
+                </a>
+
+                <!-- botão de modo escuro: lua no modo claro, sol no modo escuro -->
+                <button type="button" data-alterna-tema aria-pressed="false" aria-label="Ativar modo escuro"
+                        class="grid size-10 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-primary dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-primary-400">
+                    <svg class="size-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/></svg>
+                    <svg class="hidden size-5 dark:block" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>
+                </button>
+
+                <!-- botão do menu em telas pequenas -->
+                <button type="button" data-menu-botao aria-controls="menu-mobile" aria-expanded="false" aria-label="Abrir menu"
+                        class="grid size-10 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 lg:hidden">
+                    <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- menu em telas pequenas (aberto/fechado por assets/js/components/menu.js); mesmos grupos do cabeçalho, sempre expandidos, com o mesmo ícone do submenu à esquerda de cada opção -->
+        <nav id="menu-mobile" aria-label="Principal" class="hidden border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 lg:hidden">
+            <div class="flex flex-col gap-1">
+                <a href="/" class="nav-link">Início</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Converter de PDF</p>
+                <a href="/pages/pdf-para-docx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-word" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></span>PDF para Word</a>
+                <a href="/pages/pdf-para-pptx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-powerpoint" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg></span>PDF para PowerPoint</a>
+                <a href="/pages/pdf-para-xlsx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>PDF para Excel</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Converter em PDF</p>
+                <a href="/pages/xlsx-para-pdf.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>Excel para PDF</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Outras conversões</p>
+                <a href="/pages/json-para-xlsx.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-excel" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 10h18M3 15h18M9 4v16"/></svg></span>JSON para Excel</a>
+                <a href="/pages/xlsx-para-json.html" class="nav-link flex items-center gap-3"><span class="icone-formato icone-json" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg></span>Excel para JSON</a>
+                <p class="px-3 pt-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Apoie o projeto</p>
+                <a href="/pages/doacao.html" class="nav-link flex items-center gap-3" aria-current="page"><span class="icone-formato icone-doacao" aria-hidden="true"><svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg></span>Fazer uma doação</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="conteudo" class="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
+
+        <!-- título e descrição da página -->
+        <div class="max-w-2xl">
+            <a href="/" class="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-primary dark:text-zinc-400 dark:hover:text-primary-400">
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
+                Voltar para o início
+            </a>
+            <h1 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Apoie o goodbye<span class="text-primary">PDF</span>
+            </h1>
+            <!-- frase de destaque que convida a doar -->
+            <p class="mt-4 text-xl font-semibold text-primary dark:text-primary-400">
+                Ajude a manter o projeto no ar.
+            </p>
+            <p class="mt-3 text-zinc-600 dark:text-zinc-400">
+                O goodbyePDF é gratuito, sem anúncios, sem cadastro e open source. Seus arquivos são convertidos e descartados,
+                sem nada guardado. Mas o servidor, o domínio e as horas de manutenção têm custo, e é a sua doação que paga essa conta.
+            </p>
+            <p class="mt-3 text-zinc-600 dark:text-zinc-400">
+                Qualquer valor ajuda, e é você quem escolhe quanto doar, direto pelo Pix.
+            </p>
+        </div>
+
+        <div class="mt-10 grid gap-8 lg:grid-cols-5">
+
+            <!--
+                Pix estático: o QR Code e o "copia e cola" são gerados por `npm run gera:pix`
+                (scripts/geraPix.ts) e lidos por assets/js/pages/doacao.js.
+            -->
+            <section class="card flex flex-col items-center gap-5 p-6 text-center lg:col-span-3" aria-labelledby="titulo-pix">
+                <h2 id="titulo-pix" class="text-lg font-semibold">Doe com Pix</h2>
+
+                <!-- área do Pix (escondida pelo JS enquanto o Pix não estiver configurado) -->
+                <div data-pix class="flex w-full flex-col items-center gap-5">
+                    <!-- o QR fica sempre sobre fundo branco, para continuar legível no modo escuro -->
+                    <div class="rounded-2xl bg-white p-3 ring-1 ring-zinc-200 dark:ring-zinc-700">
+                        <img data-pix-qrcode alt="QR Code do Pix para doação ao goodbyePDF" class="size-56 sm:size-64" width="256" height="256">
+                    </div>
+
+                    <div class="w-full text-left">
+                        <label for="pix-copia-e-cola" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Pix copia e cola</label>
+                        <textarea id="pix-copia-e-cola" data-pix-codigo readonly rows="4"
+                                  class="mt-2 w-full resize-none rounded-xl border border-zinc-300 bg-zinc-50 p-3 font-mono text-xs break-all text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200"></textarea>
+                    </div>
+
+                    <!-- copia o código para a área de transferência -->
+                    <button type="button" data-pix-copiar class="btn-primary w-full">
+                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>
+                        <span data-texto>Copiar código Pix</span>
+                    </button>
+                </div>
+
+                <!-- aviso mostrado pelo JS quando o Pix ainda não foi configurado -->
+                <p data-pix-indisponivel class="hidden text-sm text-zinc-500 dark:text-zinc-400">
+                    As doações por Pix estarão disponíveis em breve. Enquanto isso, você pode ajudar de outras formas (veja ao lado).
+                </p>
+
+                <!-- mensagens da cópia (anunciadas por leitores de tela) -->
+                <p data-mensagem role="status" aria-live="polite" class="hidden"></p>
+            </section>
+
+            <!-- passo a passo e outras formas de ajudar -->
+            <aside class="lg:col-span-2" aria-labelledby="titulo-como-doar">
+                <h2 id="titulo-como-doar" class="font-semibold">Como doar</h2>
+                <ol class="mt-4 flex flex-col gap-4 text-sm text-zinc-600 dark:text-zinc-400">
+                    <li class="flex gap-3">
+                        <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary-50 text-sm font-semibold text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">1</span>
+                        <span>Abra o app do seu banco e entre na área do Pix.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary-50 text-sm font-semibold text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">2</span>
+                        <span>Escolha <strong class="font-semibold text-zinc-800 dark:text-zinc-200">ler QR Code</strong> e aponte a câmera, ou <strong class="font-semibold text-zinc-800 dark:text-zinc-200">Pix copia e cola</strong> e cole o código.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary-50 text-sm font-semibold text-primary dark:bg-primary-950/60 dark:text-primary-400" aria-hidden="true">3</span>
+                        <span>Digite o valor que quiser doar, confira os dados e confirme.</span>
+                    </li>
+                </ol>
+
+                <h2 class="mt-8 font-semibold">Outras formas de ajudar</h2>
+                <ul class="mt-3 flex flex-col gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <li>
+                        Deixe uma estrela no
+                        <a href="https://github.com/oliver-will61/goodbyepdf_api" target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline dark:text-primary-400">repositório no GitHub</a>.
+                    </li>
+                    <li>Indique o goodbyePDF para quem também precisa converter arquivos.</li>
+                    <li>
+                        Encontrou um erro ou tem uma ideia?
+                        <a href="https://github.com/oliver-will61/goodbyepdf_api/issues" target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline dark:text-primary-400">Abra uma issue</a>.
+                    </li>
+                </ul>
+            </aside>
+        </div>
+    </main>
+
+    <!-- ===== Rodapé (repetido em todas as páginas) ===== -->
+    <footer class="border-t border-zinc-200 dark:border-zinc-800">
+        <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-zinc-500 sm:flex-row sm:px-6 dark:text-zinc-400">
+            <p>goodbye<span class="font-semibold text-primary">PDF</span> · conversor de arquivos open source</p>
+            <div class="flex items-center gap-4">
+                <a href="/pages/doacao.html" class="hover:text-primary dark:hover:text-primary-400">Apoie o projeto</a>
+                <a href="https://github.com/oliver-will61/goodbyepdf_api" target="_blank" rel="noopener noreferrer" class="hover:text-primary dark:hover:text-primary-400">Código no GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="/assets/js/components/tema.js"></script>
+    <script type="module" src="/assets/js/components/menu.js"></script>
+    <script type="module" src="/assets/js/components/submenu.js"></script>
+    <script type="module" src="/assets/js/pages/doacao.js"></script>
+</body>
+</html>

@@ -24,6 +24,8 @@ if (form) {
     const textoBotao = botaoConverter.querySelector('[data-texto]')
     const iconeCarregando = botaoConverter.querySelector('[data-carregando]')
     const mensagem = form.querySelector('[data-mensagem]')
+    // convite para doar (opcional: a página funciona sem ele)
+    const conviteDoacao = form.querySelector('[data-convite-doacao]')
 
     // arquivo atual: vem do input ou de um arrastar e soltar
     let arquivoSelecionado = null
@@ -41,9 +43,16 @@ if (form) {
     }
 
     function limpaMensagem() {
-        /* Esconde a caixa de mensagem */
+        /* Esconde a caixa de mensagem (e o convite para doar, que só acompanha o sucesso) */
         mensagem.className = 'hidden'
         mensagem.textContent = ''
+        mostraConviteDoacao(false)
+    }
+
+    function mostraConviteDoacao(mostrar) {
+        /* Mostra ou esconde o convite para doar abaixo da mensagem */
+        conviteDoacao?.classList.toggle('hidden', !mostrar)
+        conviteDoacao?.classList.toggle('flex', mostrar)
     }
 
     function selecionaArquivo(arquivo) {
@@ -112,6 +121,8 @@ if (form) {
             await geraDownload(resposta, nomeConvertido)
 
             mostraMensagem(`Pronto! O download de "${nomeConvertido}" foi iniciado.`, 'sucesso')
+            // momento em que o usuário acabou de ser ajudado: convida para apoiar o projeto
+            mostraConviteDoacao(true)
         } catch (erro) {
             mostraMensagem(erro.message, 'erro')
         } finally {

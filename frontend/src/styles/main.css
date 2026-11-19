@@ -72,6 +72,15 @@
     @apply inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 font-semibold text-zinc-800 transition hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-primary-400 dark:hover:text-primary-400;
   }
 
+  /* botão "Apoiar" do cabeçalho (leva à página de doação): tom claro da marca, que fica cheio no hover e na própria página de doação */
+  .btn-apoiar {
+    @apply inline-flex items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white dark:bg-primary-950/60 dark:text-primary-400 dark:hover:bg-primary dark:hover:text-white;
+  }
+
+  .btn-apoiar[aria-current="page"] {
+    @apply bg-primary text-white dark:bg-primary dark:text-white;
+  }
+
   /* link do menu de navegação; aria-current="page" marca a página atual */
   .nav-link {
     @apply rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:text-primary dark:text-zinc-300 dark:hover:text-primary-400;
@@ -115,6 +124,11 @@
 
   .icone-json {
     @apply bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400;
+  }
+
+  /* coração do link de doação no menu mobile, no vermelho da marca */
+  .icone-doacao {
+    @apply bg-primary-50 text-primary dark:bg-primary-950/60 dark:text-primary-400;
   }
 
   /* cartão com borda suave, usado na home e nas páginas de conversão */

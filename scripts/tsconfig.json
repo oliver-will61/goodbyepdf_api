@@ -1,0 +1,11 @@
+{
+  // tsconfig dos scripts de apoio (fora do build): herda as regras da raiz,
+  // mas com rootDir na raiz do projeto para enxergar scripts/
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["."]
+}
